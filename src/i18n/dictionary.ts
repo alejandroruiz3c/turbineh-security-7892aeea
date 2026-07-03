@@ -15,20 +15,19 @@ export const resources = {
         cta: "Analizar mi web",
       },
       hero: {
-        title: "Un fallo invisible en tu web puede costarte miles de euros al día.",
+        title: "Evita el secuestro de tu negocio pagando 100 veces menos.",
         subtitle:
-          "Suplantación de tu marca, caídas, filtración de datos e incluso peticiones de rescate empiezan por un riesgo que no ves. Introduce tu dominio y descúbrelo: un diagnóstico claro de lo que tu web está exponiendo y un plan paso a paso para cerrarlo con IA. 99 € una sola vez, no miles al mes en consultores.",
-        trust:
-          "No es un pentest ni promesas de humo. Es el diagnóstico claro que te dice qué arreglar primero —y cómo— antes de gastar una fortuna en ciberseguridad.",
+          "1 de cada 3 negocios online sufren suplantación de marca, caídas a propósito o filtraciones. Esto puede costarte miles al día. Con IA puedes identificar y resolver riesgos tú mismo.",
+        trust: "",
         reassure: {
           minutes: "Análisis en minutos",
-          once: "Pago único, 99 €",
-          notech: "Sin conocimientos técnicos",
+          once: "Plan de acción claro",
+          notech: "Sin conocimientos técnicos necesarios",
         },
       },
       domainInput: {
         placeholder: "midominio.com",
-        button: "Ver mi preview gratis",
+        button: "Analiza mi dominio gratis",
         errors: {
           empty: "Introduce un dominio para continuar.",
           invalid: "Ese no parece un dominio válido. Ej: midominio.com",
