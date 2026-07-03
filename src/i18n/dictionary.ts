@@ -416,7 +416,7 @@ export const resources = {
       },
       legal: {
         disclaimer:
-          "This service performs an external, automated analysis of public configuration, exposure and web hardening signals. It does not exploit vulnerabilities, does not access private systems and does not replace a manual audit, full pentest or legal/compliance advice. The report is defensive and informational. The customer declares they own the analyzed domain or are authorized to request the diagnosis.",
+          "The report is defensive and informational. The customer declares they own the analyzed domain or are authorized to request the diagnosis.",
         terms: "Terms",
         privacy: "Privacy",
         refunds: "Refunds",
