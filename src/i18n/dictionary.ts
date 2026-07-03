@@ -340,6 +340,8 @@ export const resources = {
         emailLabel: "Your email to receive the report",
         emailPlaceholder: "you@company.com",
         button: "Run full analysis and action plan",
+        buttonLoading: "Processing…",
+        error: "We couldn't start your diagnosis. Please try again in a few seconds.",
         secure: "Secure payment. No subscription.",
       },
       ai: {
