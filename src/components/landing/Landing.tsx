@@ -526,7 +526,7 @@ function PreviewSection({
                   <div className="flex-1">
                     <div className="flex items-start gap-3">
                       <div className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ${s.text}`}>
-                        <Icon className="h-4.5 w-4.5" />
+                        <Icon className="h-4 w-4" />
                       </div>
                       <div>
                         <h3 className="text-base font-semibold leading-snug">
