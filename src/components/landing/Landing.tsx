@@ -1,9 +1,10 @@
 import logoAsset from "@/assets/turbineh-mark.png.asset.json";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "@tanstack/react-router";
 import { LangToggle } from "@/components/LangToggle";
 import { normalizeDomain, validateDomain } from "@/lib/domain";
-import { startCheckout } from "@/lib/checkout";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Shield,
   Mail,
