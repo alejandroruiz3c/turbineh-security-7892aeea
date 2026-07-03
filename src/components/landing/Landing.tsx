@@ -251,8 +251,9 @@ function HowItWorks() {
   const { t } = useTranslation();
   const steps = [
     { icon: Globe, label: t("how.s1") },
-    { icon: FileText, label: t("how.s2") },
-    { icon: Sparkles, label: t("how.s3") },
+    { icon: Shield, label: t("how.s2") },
+    { icon: FileText, label: t("how.s3") },
+    { icon: Sparkles, label: t("how.s4") },
   ];
   return (
     <section id="how" className="border-t border-border/60 bg-muted/30">
@@ -260,24 +261,31 @@ function HowItWorks() {
         <h2 className="text-center text-3xl font-bold tracking-tight md:text-4xl">
           {t("how.title")}
         </h2>
-        <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-3">
-          {steps.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={i}
-                className="relative rounded-2xl border border-border bg-card p-6 shadow-sm"
-              >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <div className="mt-1 text-base font-semibold">{s.label}</div>
-              </div>
-            );
-          })}
+        <div className="relative mx-auto mt-12 max-w-5xl">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 top-16 hidden h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent md:block"
+          />
+          <ol className="relative grid grid-cols-1 gap-4 md:grid-cols-4">
+            {steps.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <li
+                  key={i}
+                  className="reveal group relative rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ transitionDelay: `${i * 60}ms` }}
+                >
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-brand/15 to-brand-2/15 text-brand ring-1 ring-brand/20">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <div className="mt-1 text-base font-semibold leading-snug">{s.label}</div>
+                </li>
+              );
+            })}
+          </ol>
         </div>
       </div>
     </section>
