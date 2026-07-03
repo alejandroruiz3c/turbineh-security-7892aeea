@@ -14,7 +14,7 @@ import {
   KeyRound,
   Globe,
   Clock,
-  Wallet,
+  // Wallet removed
   Sparkles,
   Check,
   ArrowRight,
