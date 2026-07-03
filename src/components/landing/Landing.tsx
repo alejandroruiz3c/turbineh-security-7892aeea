@@ -55,11 +55,14 @@ function scrollToId(id: string) {
 export function Landing() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
+  const navigate = useNavigate();
 
   const [rawDomain, setRawDomain] = useState("");
   const [normalized, setNormalized] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
@@ -95,12 +98,36 @@ export function Landing() {
     setTimeout(() => scrollToId("preview"), 60);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!normalized) {
       scrollToId("domain-input");
       return;
     }
-    startCheckout(normalized, email || undefined, lang);
+    if (checkoutLoading) return;
+    setCheckoutError(null);
+    setCheckoutLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mock-unlock", {
+        body: {
+          domain: normalized,
+          email: email?.trim() || undefined,
+          lang,
+        },
+      });
+      if (error) throw error;
+      const scanRequestId = (data as { scanRequestId?: string } | null)?.scanRequestId;
+      if (!scanRequestId) throw new Error("Missing scanRequestId in response");
+      await navigate({
+        to: "/verify/$id",
+        params: { id: scanRequestId },
+        search: { lang },
+      });
+    } catch (err) {
+      console.error("[handleCheckout] mock-unlock failed", err);
+      setCheckoutError(t("paywall.error"));
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   // Reveal-on-scroll for elements with `.reveal`
