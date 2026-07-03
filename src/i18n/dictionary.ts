@@ -115,6 +115,8 @@ export const resources = {
         emailLabel: "Tu email para recibir el informe",
         emailPlaceholder: "tu@empresa.com",
         button: "Ejecutar análisis y plan de acción completo",
+        buttonLoading: "Procesando…",
+        error: "No hemos podido iniciar tu diagnóstico. Inténtalo de nuevo en unos segundos.",
         secure: "Pago seguro. Sin suscripción.",
       },
       ai: {
@@ -338,6 +340,8 @@ export const resources = {
         emailLabel: "Your email to receive the report",
         emailPlaceholder: "you@company.com",
         button: "Run full analysis and action plan",
+        buttonLoading: "Processing…",
+        error: "We couldn't start your diagnosis. Please try again in a few seconds.",
         secure: "Secure payment. No subscription.",
       },
       ai: {

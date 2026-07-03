@@ -1,9 +1,10 @@
 import logoAsset from "@/assets/turbineh-mark.png.asset.json";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "@tanstack/react-router";
 import { LangToggle } from "@/components/LangToggle";
 import { normalizeDomain, validateDomain } from "@/lib/domain";
-import { startCheckout } from "@/lib/checkout";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Shield,
   Mail,
@@ -54,11 +55,14 @@ function scrollToId(id: string) {
 export function Landing() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
+  const navigate = useNavigate();
 
   const [rawDomain, setRawDomain] = useState("");
   const [normalized, setNormalized] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
@@ -94,12 +98,36 @@ export function Landing() {
     setTimeout(() => scrollToId("preview"), 60);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!normalized) {
       scrollToId("domain-input");
       return;
     }
-    startCheckout(normalized, email || undefined, lang);
+    if (checkoutLoading) return;
+    setCheckoutError(null);
+    setCheckoutLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mock-unlock", {
+        body: {
+          domain: normalized,
+          email: email?.trim() || undefined,
+          lang,
+        },
+      });
+      if (error) throw error;
+      const scanRequestId = (data as { scanRequestId?: string } | null)?.scanRequestId;
+      if (!scanRequestId) throw new Error("Missing scanRequestId in response");
+      await navigate({
+        to: "/verify/$id",
+        params: { id: scanRequestId },
+        search: { lang },
+      });
+    } catch (err) {
+      console.error("[handleCheckout] mock-unlock failed", err);
+      setCheckoutError(t("paywall.error"));
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   // Reveal-on-scroll for elements with `.reveal`
@@ -144,7 +172,10 @@ export function Landing() {
           email={email}
           setEmail={setEmail}
           onCheckout={handleCheckout}
+          loading={checkoutLoading}
+          errorMsg={checkoutError}
         />
+
         <AiSection domain={normalized ?? (lang === "en" ? "yourdomain.com" : "midominio.com")} />
         <WhatIsExposure />
         <WhatWeCheck />
@@ -569,10 +600,14 @@ function Paywall({
   email,
   setEmail,
   onCheckout,
+  loading,
+  errorMsg,
 }: {
   email: string;
   setEmail: (v: string) => void;
   onCheckout: () => void;
+  loading: boolean;
+  errorMsg: string | null;
 }) {
   const { t } = useTranslation();
   const bullets = t("paywall.bullets", { returnObjects: true }) as string[];
@@ -619,10 +654,27 @@ function Paywall({
                 />
                 <button
                   onClick={onCheckout}
-                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-5 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition"
+                  disabled={loading}
+                  aria-busy={loading}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-5 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+                  {loading ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
+                      {t("paywall.buttonLoading")}
+                    </>
+                  ) : (
+                    <>
+                      {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
+                {errorMsg && (
+                  <p role="alert" className="mt-2 text-sm text-destructive">
+                    {errorMsg}
+                  </p>
+                )}
+
               </div>
             </div>
           </div>
