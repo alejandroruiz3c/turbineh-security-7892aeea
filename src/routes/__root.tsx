@@ -83,7 +83,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0b1220" },
       { name: "robots", content: "index,follow,max-image-preview:large,max-snippet:-1" },
-      { title: "Diagnóstico de Exposición Web con IA — TurbineH Security" },
+      { title: "AI Cybersecurity — TurbineH Security" },
       {
         name: "description",
         content:
@@ -101,7 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "geo.placename", content: "España" },
       // Open Graph
       { property: "og:site_name", content: "TurbineH Security" },
-      { property: "og:title", content: "Diagnóstico de Exposición Web con IA — TurbineH Security" },
+      { property: "og:title", content: "AI Cybersecurity — TurbineH Security" },
       {
         property: "og:description",
         content:
@@ -112,12 +112,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:locale:alternate", content: "en_US" },
       // Twitter
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Diagnóstico de Exposición Web con IA — TurbineH Security" },
+      { name: "twitter:title", content: "AI Cybersecurity — TurbineH Security" },
       {
         name: "twitter:description",
         content:
           "Diagnóstico externo automatizado con IA y plan de acción claro. Sin conocimientos técnicos.",
       },
+      { name: "description", content: "AI Cybersecurity for online businesses" },
+      { property: "og:description", content: "AI Cybersecurity for online businesses" },
+      { name: "twitter:description", content: "AI Cybersecurity for online businesses" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QQ0MLVRBXDVnwmLWPn2CxxjKdg52/social-images/social-1783079837793-F18AD2F0-EC54-48FD-A1AD-CC76A389519D.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QQ0MLVRBXDVnwmLWPn2CxxjKdg52/social-images/social-1783079837793-F18AD2F0-EC54-48FD-A1AD-CC76A389519D.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
