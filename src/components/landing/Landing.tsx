@@ -360,12 +360,10 @@ function PreviewSection({
 
 /* ---------------- PAYWALL ---------------- */
 function Paywall({
-  hasDomain,
   email,
   setEmail,
   onCheckout,
 }: {
-  hasDomain: boolean;
   email: string;
   setEmail: (v: string) => void;
   onCheckout: () => void;
