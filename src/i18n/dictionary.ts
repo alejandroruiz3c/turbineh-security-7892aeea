@@ -319,7 +319,7 @@ export const resources = {
         ],
         emailLabel: "Your email to receive the report",
         emailPlaceholder: "you@company.com",
-        button: "Unlock diagnosis — €99",
+        button: "Run full analysis and action plan",
         secure: "Secure payment. No subscription.",
       },
       ai: {
