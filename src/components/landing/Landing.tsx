@@ -116,7 +116,6 @@ export function Landing() {
           <PreviewSection domain={normalized} cardKeys={previewCards} onCta={handleCheckout} />
         )}
         <Paywall
-          hasDomain={!!normalized}
           email={email}
           setEmail={setEmail}
           onCheckout={handleCheckout}
