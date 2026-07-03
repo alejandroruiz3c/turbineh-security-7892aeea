@@ -346,6 +346,54 @@ function HowItWorks() {
 }
 
 /* ---------------- PREVIEW ---------------- */
+const CARD_SEVERITY: Record<(typeof CARD_KEYS)[number], "critical" | "high" | "medium" | "low"> = {
+  dmarc: "critical",
+  admin: "critical",
+  headers: "high",
+  ssl: "high",
+  csp: "high",
+  cookies: "medium",
+  forms: "medium",
+  dns: "medium",
+  tech: "low",
+};
+
+const SEV_ORDER = { critical: 0, high: 1, medium: 2, low: 3 } as const;
+
+const SEV_STYLES: Record<
+  "critical" | "high" | "medium" | "low",
+  { badge: string; bar: string; dot: string; ring: string; text: string }
+> = {
+  critical: {
+    badge: "bg-red-500/10 text-red-500 border-red-500/30",
+    bar: "bg-red-500",
+    dot: "bg-red-500 shadow-[0_0_10px_theme(colors.red.500)]",
+    ring: "ring-red-500/30",
+    text: "text-red-500",
+  },
+  high: {
+    badge: "bg-orange-500/10 text-orange-500 border-orange-500/30",
+    bar: "bg-orange-500",
+    dot: "bg-orange-500 shadow-[0_0_10px_theme(colors.orange.500)]",
+    ring: "ring-orange-500/25",
+    text: "text-orange-500",
+  },
+  medium: {
+    badge: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30",
+    bar: "bg-yellow-500",
+    dot: "bg-yellow-500 shadow-[0_0_10px_theme(colors.yellow.500)]",
+    ring: "ring-yellow-500/25",
+    text: "text-yellow-500",
+  },
+  low: {
+    badge: "bg-sky-500/10 text-sky-500 border-sky-500/30",
+    bar: "bg-sky-500",
+    dot: "bg-sky-500 shadow-[0_0_10px_theme(colors.sky.500)]",
+    ring: "ring-sky-500/20",
+    text: "text-sky-500",
+  },
+};
+
 function PreviewSection({
   domain,
   cardKeys,
@@ -356,46 +404,150 @@ function PreviewSection({
   onCta: () => void;
 }) {
   const { t } = useTranslation();
+
+  // Sort by severity to compute priority numbers
+  const ranked = useMemo(() => {
+    return [...cardKeys]
+      .sort((a, b) => SEV_ORDER[CARD_SEVERITY[a]] - SEV_ORDER[CARD_SEVERITY[b]])
+      .map((k, i) => ({ k, priority: i + 1, severity: CARD_SEVERITY[k] }));
+  }, [cardKeys]);
+
+  const counts = useMemo(() => {
+    const c = { critical: 0, high: 0, medium: 0, low: 0 };
+    ranked.forEach((r) => c[r.severity]++);
+    return c;
+  }, [ranked]);
+
+  // Deterministic report id + timestamp from domain
+  const reportId = useMemo(() => {
+    let h = 0;
+    for (const c of domain) h = (h * 33 + c.charCodeAt(0)) >>> 0;
+    return "TH-" + h.toString(16).toUpperCase().padStart(8, "0").slice(0, 8);
+  }, [domain]);
+
+  const total = ranked.length;
+  const totalWeight = total * 3; // max sev weight per finding = 3
+  const currentWeight = counts.critical * 3 + counts.high * 2 + counts.medium * 1.2 + counts.low * 0.5;
+  const exposurePct = Math.min(100, Math.round((currentWeight / Math.max(totalWeight, 1)) * 100));
+
   return (
-    <section id="preview" className="scroll-mt-24 border-t border-border/60">
+    <section id="preview" className="scroll-mt-24 border-t border-border/60 bg-gradient-to-b from-background to-background/60">
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            {t("preview.headingFor")}{" "}
-            <span className="text-brand">{domain}</span>
-          </h2>
+        {/* Report header */}
+        <div className="reveal overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur cyber-border">
+          <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-2.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 rounded-full bg-red-500/70" />
+              <span className="inline-flex h-2 w-2 rounded-full bg-yellow-500/70" />
+              <span className="inline-flex h-2 w-2 rounded-full bg-green-500/70" />
+              <span className="ml-3">turbineh://scan/{domain}</span>
+            </div>
+            <span className="hidden sm:inline">{t("preview.reportId")}: {reportId}</span>
+          </div>
+          <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              <div className="font-mono text-xs text-muted-foreground">{t("preview.scannedAt")} · {new Date().toISOString().slice(0, 16).replace("T", " ")} UTC</div>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">
+                {t("preview.headingFor")} <span className="text-brand">{domain}</span>
+              </h2>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {total} {t("preview.findings")}
+              </div>
+            </div>
+            <div className="min-w-[220px]">
+              <div className="mb-1 flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>{t("preview.summary")}</span>
+                <span className={exposurePct >= 66 ? "text-red-500" : exposurePct >= 33 ? "text-orange-500" : "text-yellow-500"}>{exposurePct}%</span>
+              </div>
+              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                {(["critical", "high", "medium", "low"] as const).map((s) =>
+                  counts[s] ? (
+                    <div
+                      key={s}
+                      className={`${SEV_STYLES[s].bar} h-full`}
+                      style={{ width: `${(counts[s] / total) * 100}%` }}
+                    />
+                  ) : null,
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium">
+                {(["critical", "high", "medium", "low"] as const).map((s) => (
+                  <span
+                    key={s}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 ${SEV_STYLES[s].badge}`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${SEV_STYLES[s].dot}`} />
+                    {t(`preview.severity.${s}`)} · {counts[s]}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="mx-auto mt-8 max-w-3xl rounded-xl border border-brand/30 bg-brand/5 p-4 text-sm text-foreground/80">
+
+        <div className="mx-auto mt-6 max-w-4xl rounded-xl border border-brand/30 bg-brand/5 p-4 text-sm text-foreground/80">
           <div className="flex gap-3">
             <Shield className="h-5 w-5 shrink-0 text-brand" />
             <p>{t("preview.disclaimer")}</p>
           </div>
         </div>
-        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {cardKeys.map((k) => {
+
+        {/* Findings list */}
+        <ol className="mt-8 space-y-3">
+          {ranked.map(({ k, priority, severity }) => {
             const Icon = CARD_ICONS[k];
+            const s = SEV_STYLES[severity];
             return (
-              <div
+              <li
                 key={k}
-                className="reveal group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+                className={`reveal group relative overflow-hidden rounded-xl border border-border bg-card p-4 pl-5 shadow-sm ring-1 ${s.ring} transition hover:-translate-y-0.5 hover:shadow-md md:p-5 md:pl-6`}
               >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                  <Icon className="h-5 w-5" />
+                <div className={`absolute inset-y-0 left-0 w-1.5 ${s.bar}`} />
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                  {/* Priority number */}
+                  <div className="flex items-center gap-4 md:w-40 md:shrink-0">
+                    <div className="flex flex-col items-center">
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {t("preview.priority")}
+                      </div>
+                      <div className={`font-mono text-3xl font-bold leading-none ${s.text}`}>
+                        {String(priority).padStart(2, "0")}
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${s.badge}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                      {t(`preview.severity.${severity}`)}
+                    </span>
+                  </div>
+
+                  {/* Body */}
+                  <div className="flex-1">
+                    <div className="flex items-start gap-3">
+                      <div className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ${s.text}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold leading-snug">
+                          {t(`preview.cards.${k}.t`)}
+                        </h3>
+                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                          {t(`preview.cards.${k}.d`)}
+                        </p>
+                        <div className="mt-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
+                          {t("preview.status")}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-base font-semibold leading-snug">
-                  {t(`preview.cards.${k}.t`)}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {t(`preview.cards.${k}.d`)}
-                </p>
-                <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                  {t("preview.tag")}
-                </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
+
         <p className="mx-auto mt-10 max-w-3xl text-center text-sm text-muted-foreground">
           {t("preview.closing")}
         </p>
