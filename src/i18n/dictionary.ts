@@ -229,20 +229,19 @@ export const resources = {
         cta: "Analyze my site",
       },
       hero: {
-        title: "One invisible flaw in your website can cost you thousands a day.",
+        title: "Avoid your business being hijacked — for 100× less.",
         subtitle:
-          "Brand impersonation, downtime, data leaks, even ransom demands — they all start with a risk you can't see. Enter your domain and find out: a clear diagnosis of what your website is exposing and a step-by-step plan to close it with AI. €99 once, not thousands a month in consultants.",
-        trust:
-          "It's not a pentest or empty promises. It's the clear diagnosis that tells you what to fix first — and how — before spending a fortune on cybersecurity.",
+          "1 in 3 online businesses suffer brand impersonation, deliberate downtime or data leaks. This can cost you thousands a day. With AI you can identify and fix the risks yourself.",
+        trust: "",
         reassure: {
-          minutes: "Results in minutes",
-          once: "One-time, €99",
-          notech: "No tech skills needed",
+          minutes: "Analysis in minutes",
+          once: "Clear action plan",
+          notech: "No tech skills required",
         },
       },
       domainInput: {
         placeholder: "yourdomain.com",
-        button: "See my free preview",
+        button: "Analyze my domain free",
         errors: {
           empty: "Enter a domain to continue.",
           invalid: "That doesn't look like a valid domain. Ex: yourdomain.com",
@@ -253,8 +252,9 @@ export const resources = {
       how: {
         title: "How it works",
         s1: "Enter your domain",
-        s2: "Get your exposure diagnosis",
-        s3: "Close the risks with AI, step by step",
+        s2: "Get your preliminary diagnosis",
+        s3: "Download the deep analysis and your action plan",
+        s4: "Execute it yourself with your favorite AI assistant",
       },
       preview: {
         headingFor: "Preview for",
