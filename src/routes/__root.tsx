@@ -81,28 +81,90 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Diagnóstico de Exposición Web — TurbineH Security" },
+      { name: "theme-color", content: "#0b1220" },
+      { name: "robots", content: "index,follow,max-image-preview:large,max-snippet:-1" },
+      { title: "Diagnóstico de Exposición Web con IA — TurbineH Security" },
       {
         name: "description",
         content:
-          "Descubre qué expone tu web y cierra los riesgos con IA. Diagnóstico claro, pago único de 99 €.",
+          "Evita el secuestro de tu negocio online. Diagnóstico de exposición web con IA en minutos y plan de acción claro. Sin conocimientos técnicos.",
+      },
+      {
+        name: "keywords",
+        content:
+          "diagnóstico exposición web, ciberseguridad para negocios, seguridad web con IA, suplantación de marca, phishing, DNS, SPF DKIM DMARC, hardening web, TurbineH Security",
       },
       { name: "author", content: "TurbineH Security" },
-      { property: "og:title", content: "Diagnóstico de Exposición Web — TurbineH Security" },
+      { name: "application-name", content: "TurbineH Security" },
+      // Geo hints
+      { name: "geo.region", content: "ES" },
+      { name: "geo.placename", content: "España" },
+      // Open Graph
+      { property: "og:site_name", content: "TurbineH Security" },
+      { property: "og:title", content: "Diagnóstico de Exposición Web con IA — TurbineH Security" },
       {
         property: "og:description",
         content:
-          "Diagnóstico externo automatizado de la exposición pública de tu web. Plan de acción con IA. 99 € pago único.",
+          "Evita el secuestro de tu negocio online. Diagnóstico externo automatizado con IA y plan de acción claro.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:locale", content: "es_ES" },
+      { property: "og:locale:alternate", content: "en_US" },
+      // Twitter
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Diagnóstico de Exposición Web con IA — TurbineH Security" },
+      {
+        name: "twitter:description",
+        content:
+          "Diagnóstico externo automatizado con IA y plan de acción claro. Sin conocimientos técnicos.",
+      },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "canonical", href: "/" },
+      { rel: "alternate", hrefLang: "es", href: "/?lang=es" },
+      { rel: "alternate", hrefLang: "en", href: "/?lang=en" },
+      { rel: "alternate", hrefLang: "x-default", href: "/" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "TurbineH Security",
+              url: "/",
+              description:
+                "Diagnóstico de exposición web con IA. Ciberseguridad accesible para pymes y negocios online.",
+              areaServed: ["ES", "EU", "LATAM"],
+            },
+            {
+              "@type": "WebSite",
+              name: "TurbineH Security",
+              url: "/",
+              inLanguage: ["es", "en"],
+            },
+            {
+              "@type": "Service",
+              name: "Diagnóstico de Exposición Web",
+              provider: { "@type": "Organization", name: "TurbineH Security" },
+              areaServed: ["ES", "EU", "LATAM"],
+              serviceType: "Cybersecurity assessment",
+              description:
+                "Análisis externo automatizado con IA de la exposición pública de un dominio, con plan de acción priorizado.",
+              offers: {
+                "@type": "Offer",
+                price: "99",
+                priceCurrency: "EUR",
+                availability: "https://schema.org/InStock",
+              },
+            },
+          ],
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,

@@ -15,20 +15,19 @@ export const resources = {
         cta: "Analizar mi web",
       },
       hero: {
-        title: "Un fallo invisible en tu web puede costarte miles de euros al día.",
+        title: "Evita el secuestro de tu negocio pagando 100 veces menos.",
         subtitle:
-          "Suplantación de tu marca, caídas, filtración de datos e incluso peticiones de rescate empiezan por un riesgo que no ves. Introduce tu dominio y descúbrelo: un diagnóstico claro de lo que tu web está exponiendo y un plan paso a paso para cerrarlo con IA. 99 € una sola vez, no miles al mes en consultores.",
-        trust:
-          "No es un pentest ni promesas de humo. Es el diagnóstico claro que te dice qué arreglar primero —y cómo— antes de gastar una fortuna en ciberseguridad.",
+          "1 de cada 3 negocios online sufren suplantación de marca, caídas a propósito o filtraciones. Esto puede costarte miles al día. Con IA puedes identificar y resolver riesgos tú mismo.",
+        trust: "",
         reassure: {
           minutes: "Análisis en minutos",
-          once: "Pago único, 99 €",
-          notech: "Sin conocimientos técnicos",
+          once: "Plan de acción claro",
+          notech: "Sin conocimientos técnicos necesarios",
         },
       },
       domainInput: {
         placeholder: "midominio.com",
-        button: "Ver mi preview gratis",
+        button: "Analiza mi dominio gratis",
         errors: {
           empty: "Introduce un dominio para continuar.",
           invalid: "Ese no parece un dominio válido. Ej: midominio.com",
@@ -39,8 +38,9 @@ export const resources = {
       how: {
         title: "Cómo funciona",
         s1: "Introduce tu dominio",
-        s2: "Recibe tu diagnóstico de exposición",
-        s3: "Cierra los riesgos con IA, paso a paso",
+        s2: "Recibe tu diagnóstico preliminar",
+        s3: "Descarga el análisis profundo y tu plan de acción",
+        s4: "Ejecútalo tú mismo siguiendo las instrucciones en tu IA favorita",
       },
       preview: {
         headingFor: "Preview para",
@@ -105,7 +105,7 @@ export const resources = {
         ],
         emailLabel: "Tu email para recibir el informe",
         emailPlaceholder: "tu@empresa.com",
-        button: "Desbloquear diagnóstico — 99 €",
+        button: "Ejecutar análisis y plan de acción completo",
         secure: "Pago seguro. Sin suscripción.",
       },
       ai: {
@@ -202,7 +202,7 @@ export const resources = {
       },
       legal: {
         disclaimer:
-          "Este servicio realiza un análisis externo y automatizado de señales públicas de configuración, exposición y hardening web. No realiza explotación de vulnerabilidades, no accede a sistemas privados y no sustituye una auditoría manual, pentest completo o asesoramiento legal/compliance. El informe tiene finalidad defensiva e informativa. El cliente declara que es propietario del dominio analizado o que cuenta con autorización para solicitar el diagnóstico.",
+          "El informe tiene finalidad defensiva e informativa. El cliente declara que es propietario del dominio analizado o que cuenta con autorización para solicitar el diagnóstico.",
         terms: "Términos",
         privacy: "Privacidad",
         refunds: "Reembolsos",
@@ -229,20 +229,19 @@ export const resources = {
         cta: "Analyze my site",
       },
       hero: {
-        title: "One invisible flaw in your website can cost you thousands a day.",
+        title: "Avoid your business being hijacked — for 100× less.",
         subtitle:
-          "Brand impersonation, downtime, data leaks, even ransom demands — they all start with a risk you can't see. Enter your domain and find out: a clear diagnosis of what your website is exposing and a step-by-step plan to close it with AI. €99 once, not thousands a month in consultants.",
-        trust:
-          "It's not a pentest or empty promises. It's the clear diagnosis that tells you what to fix first — and how — before spending a fortune on cybersecurity.",
+          "1 in 3 online businesses suffer brand impersonation, deliberate downtime or data leaks. This can cost you thousands a day. With AI you can identify and fix the risks yourself.",
+        trust: "",
         reassure: {
-          minutes: "Results in minutes",
-          once: "One-time, €99",
-          notech: "No tech skills needed",
+          minutes: "Analysis in minutes",
+          once: "Clear action plan",
+          notech: "No tech skills required",
         },
       },
       domainInput: {
         placeholder: "yourdomain.com",
-        button: "See my free preview",
+        button: "Analyze my domain free",
         errors: {
           empty: "Enter a domain to continue.",
           invalid: "That doesn't look like a valid domain. Ex: yourdomain.com",
@@ -253,8 +252,9 @@ export const resources = {
       how: {
         title: "How it works",
         s1: "Enter your domain",
-        s2: "Get your exposure diagnosis",
-        s3: "Close the risks with AI, step by step",
+        s2: "Get your preliminary diagnosis",
+        s3: "Download the deep analysis and your action plan",
+        s4: "Execute it yourself with your favorite AI assistant",
       },
       preview: {
         headingFor: "Preview for",
@@ -319,7 +319,7 @@ export const resources = {
         ],
         emailLabel: "Your email to receive the report",
         emailPlaceholder: "you@company.com",
-        button: "Unlock diagnosis — €99",
+        button: "Run full analysis and action plan",
         secure: "Secure payment. No subscription.",
       },
       ai: {
@@ -416,7 +416,7 @@ export const resources = {
       },
       legal: {
         disclaimer:
-          "This service performs an external, automated analysis of public configuration, exposure and web hardening signals. It does not exploit vulnerabilities, does not access private systems and does not replace a manual audit, full pentest or legal/compliance advice. The report is defensive and informational. The customer declares they own the analyzed domain or are authorized to request the diagnosis.",
+          "The report is defensive and informational. The customer declares they own the analyzed domain or are authorized to request the diagnosis.",
         terms: "Terms",
         privacy: "Privacy",
         refunds: "Refunds",

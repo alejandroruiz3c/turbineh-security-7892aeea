@@ -14,7 +14,7 @@ import {
   KeyRound,
   Globe,
   Clock,
-  Wallet,
+  // Wallet removed
   Sparkles,
   Check,
   ArrowRight,
@@ -101,8 +101,32 @@ export function Landing() {
     startCheckout(normalized, email || undefined, lang);
   };
 
+  // Reveal-on-scroll for elements with `.reveal`
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const els = document.querySelectorAll<HTMLElement>(".reveal");
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("is-visible");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [normalized]);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <ScrollProgress />
       <Header />
       <main>
         <Hero
@@ -116,7 +140,6 @@ export function Landing() {
           <PreviewSection domain={normalized} cardKeys={previewCards} onCta={handleCheckout} />
         )}
         <Paywall
-          hasDomain={!!normalized}
           email={email}
           setEmail={setEmail}
           onCheckout={handleCheckout}
@@ -130,6 +153,32 @@ export function Landing() {
         <LegalDisclaimer />
       </main>
       <Footer />
+    </div>
+  );
+}
+
+/* ---------------- SCROLL PROGRESS ---------------- */
+function ScrollProgress() {
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      setP(max > 0 ? (h.scrollTop / max) * 100 : 0);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <div
+      aria-hidden
+      className="fixed inset-x-0 top-0 z-50 h-0.5 bg-transparent"
+    >
+      <div
+        className="h-full bg-gradient-to-r from-brand via-brand-2 to-cta transition-[width] duration-150"
+        style={{ width: `${p}%` }}
+      />
     </div>
   );
 }
@@ -229,15 +278,12 @@ function Hero({
           {error && (
             <p className="mt-2 pl-2 text-sm text-destructive">{error}</p>
           )}
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            {t("hero.trust")}
-          </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.minutes")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.once")}
+              <FileText className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.once")}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.notech")}
@@ -254,8 +300,9 @@ function HowItWorks() {
   const { t } = useTranslation();
   const steps = [
     { icon: Globe, label: t("how.s1") },
-    { icon: FileText, label: t("how.s2") },
-    { icon: Sparkles, label: t("how.s3") },
+    { icon: Shield, label: t("how.s2") },
+    { icon: FileText, label: t("how.s3") },
+    { icon: Sparkles, label: t("how.s4") },
   ];
   return (
     <section id="how" className="border-t border-border/60 bg-muted/30">
@@ -263,24 +310,31 @@ function HowItWorks() {
         <h2 className="text-center text-3xl font-bold tracking-tight md:text-4xl">
           {t("how.title")}
         </h2>
-        <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-3">
-          {steps.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={i}
-                className="relative rounded-2xl border border-border bg-card p-6 shadow-sm"
-              >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <div className="mt-1 text-base font-semibold">{s.label}</div>
-              </div>
-            );
-          })}
+        <div className="relative mx-auto mt-12 max-w-5xl">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 top-16 hidden h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent md:block"
+          />
+          <ol className="relative grid grid-cols-1 gap-4 md:grid-cols-4">
+            {steps.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <li
+                  key={i}
+                  className="reveal group relative rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ transitionDelay: `${i * 60}ms` }}
+                >
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-brand/15 to-brand-2/15 text-brand ring-1 ring-brand/20">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <div className="mt-1 text-base font-semibold leading-snug">{s.label}</div>
+                </li>
+              );
+            })}
+          </ol>
         </div>
       </div>
     </section>
@@ -319,7 +373,7 @@ function PreviewSection({
             return (
               <div
                 key={k}
-                className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+                className="reveal group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
                   <Icon className="h-5 w-5" />
@@ -356,12 +410,10 @@ function PreviewSection({
 
 /* ---------------- PAYWALL ---------------- */
 function Paywall({
-  hasDomain,
   email,
   setEmail,
   onCheckout,
 }: {
-  hasDomain: boolean;
   email: string;
   setEmail: (v: string) => void;
   onCheckout: () => void;
@@ -415,12 +467,6 @@ function Paywall({
                 >
                   {t("paywall.button")} <ArrowRight className="h-4 w-4" />
                 </button>
-                <p className="text-center text-xs text-muted-foreground">{t("paywall.secure")}</p>
-                {!hasDomain && (
-                  <p className="text-center text-xs text-muted-foreground">
-                    ← <a href="#domain-input" className="underline">{t("nav.cta")}</a>
-                  </p>
-                )}
               </div>
             </div>
           </div>
