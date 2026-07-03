@@ -105,7 +105,7 @@ export const resources = {
         ],
         emailLabel: "Tu email para recibir el informe",
         emailPlaceholder: "tu@empresa.com",
-        button: "Desbloquear diagnóstico — 99 €",
+        button: "Ejecutar análisis y plan de acción completo",
         secure: "Pago seguro. Sin suscripción.",
       },
       ai: {
