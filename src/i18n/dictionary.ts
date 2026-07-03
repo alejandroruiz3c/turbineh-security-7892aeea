@@ -202,7 +202,7 @@ export const resources = {
       },
       legal: {
         disclaimer:
-          "Este servicio realiza un análisis externo y automatizado de señales públicas de configuración, exposición y hardening web. No realiza explotación de vulnerabilidades, no accede a sistemas privados y no sustituye una auditoría manual, pentest completo o asesoramiento legal/compliance. El informe tiene finalidad defensiva e informativa. El cliente declara que es propietario del dominio analizado o que cuenta con autorización para solicitar el diagnóstico.",
+          "El informe tiene finalidad defensiva e informativa. El cliente declara que es propietario del dominio analizado o que cuenta con autorización para solicitar el diagnóstico.",
         terms: "Términos",
         privacy: "Privacidad",
         refunds: "Reembolsos",
