@@ -600,10 +600,14 @@ function Paywall({
   email,
   setEmail,
   onCheckout,
+  loading,
+  errorMsg,
 }: {
   email: string;
   setEmail: (v: string) => void;
   onCheckout: () => void;
+  loading: boolean;
+  errorMsg: string | null;
 }) {
   const { t } = useTranslation();
   const bullets = t("paywall.bullets", { returnObjects: true }) as string[];
