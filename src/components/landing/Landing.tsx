@@ -172,7 +172,10 @@ export function Landing() {
           email={email}
           setEmail={setEmail}
           onCheckout={handleCheckout}
+          loading={checkoutLoading}
+          errorMsg={checkoutError}
         />
+
         <AiSection domain={normalized ?? (lang === "en" ? "yourdomain.com" : "midominio.com")} />
         <WhatIsExposure />
         <WhatWeCheck />
