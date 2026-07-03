@@ -38,8 +38,9 @@ export const resources = {
       how: {
         title: "Cómo funciona",
         s1: "Introduce tu dominio",
-        s2: "Recibe tu diagnóstico de exposición",
-        s3: "Cierra los riesgos con IA, paso a paso",
+        s2: "Recibe tu diagnóstico preliminar",
+        s3: "Descarga el análisis profundo y tu plan de acción",
+        s4: "Ejecútalo tú mismo siguiendo las instrucciones en tu IA favorita",
       },
       preview: {
         headingFor: "Preview para",
