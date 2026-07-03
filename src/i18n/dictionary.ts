@@ -43,7 +43,16 @@ export const resources = {
         s4: "Ejecútalo tú mismo siguiendo las instrucciones en tu IA favorita",
       },
       preview: {
-        headingFor: "Preview para",
+        headingFor: "Informe preliminar para",
+        reportId: "ID de informe",
+        scannedAt: "Escaneado",
+        findings: "hallazgos potenciales",
+        summary: "Resumen de exposición",
+        priority: "Prioridad",
+        risk: "Riesgo",
+        impact: "Impacto",
+        status: "Pendiente de verificar en tu diagnóstico completo",
+        severity: { critical: "Crítico", high: "Alto", medium: "Medio", low: "Bajo" },
         disclaimer:
           "Preview gratuito basado en vulnerabilidades potenciales y riesgos comunes que revisaremos en tu dominio. Para ejecutar el análisis completo y ver tus hallazgos concretos, desbloquea el diagnóstico.",
         tag: "Se revisará en tu diagnóstico",
