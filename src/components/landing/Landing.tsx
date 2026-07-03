@@ -373,7 +373,7 @@ function PreviewSection({
             return (
               <div
                 key={k}
-                className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+                className="reveal group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
                   <Icon className="h-5 w-5" />
