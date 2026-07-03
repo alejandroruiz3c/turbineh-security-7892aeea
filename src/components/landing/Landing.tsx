@@ -232,15 +232,20 @@ function Hero({
   const { t } = useTranslation();
   return (
     <section id="top" className="relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10 cyber-grid" />
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-brand/10 blur-3xl" />
         <div className="absolute top-40 right-0 h-[300px] w-[300px] rounded-full bg-brand-2/10 blur-3xl" />
+        <div className="scan-line" />
       </div>
       <div className="mx-auto max-w-6xl px-4 pt-14 pb-20 md:px-6 md:pt-24 md:pb-28">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-            TurbineH Security · Web Exposure Diagnosis
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-card/60 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em] text-brand backdrop-blur">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+            </span>
+            SEC-DIAG · SYSTEM ONLINE
           </span>
           <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
             {t("hero.title")}
@@ -249,6 +254,7 @@ function Hero({
             {t("hero.subtitle")}
           </p>
         </div>
+
 
         <div id="domain-input" className="mx-auto mt-10 max-w-2xl">
           <form
