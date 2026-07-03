@@ -11,6 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { initI18n } from "../i18n";
+import { useTranslation } from "react-i18next";
+
+initI18n();
 
 function NotFoundComponent() {
   return (
@@ -77,14 +81,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Diagnóstico de Exposición Web — TurbineH Security" },
+      {
+        name: "description",
+        content:
+          "Descubre qué expone tu web y cierra los riesgos con IA. Diagnóstico claro, pago único de 99 €.",
+      },
+      { name: "author", content: "TurbineH Security" },
+      { property: "og:title", content: "Diagnóstico de Exposición Web — TurbineH Security" },
+      {
+        property: "og:description",
+        content:
+          "Diagnóstico externo automatizado de la exposición pública de tu web. Plan de acción con IA. 99 € pago único.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -101,8 +112,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("en") ? "en" : "es";
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <HeadContent />
       </head>
