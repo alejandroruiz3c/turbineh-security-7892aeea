@@ -654,10 +654,27 @@ function Paywall({
                 />
                 <button
                   onClick={onCheckout}
-                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-5 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition"
+                  disabled={loading}
+                  aria-busy={loading}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-5 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+                  {loading ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
+                      {t("paywall.buttonLoading")}
+                    </>
+                  ) : (
+                    <>
+                      {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
+                {errorMsg && (
+                  <p role="alert" className="mt-2 text-sm text-destructive">
+                    {errorMsg}
+                  </p>
+                )}
+
               </div>
             </div>
           </div>
