@@ -1,3 +1,4 @@
+import logoAsset from "@/assets/turbineh-mark.png.asset.json";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LangToggle } from "@/components/LangToggle";
@@ -190,9 +191,13 @@ function Header() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
         <a href="#top" className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand to-brand-2 text-white shadow-sm">
-            <Shield className="h-4 w-4" strokeWidth={2.5} />
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="TurbineH Security"
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0"
+          />
           <span className="text-sm font-semibold tracking-tight">
             TurbineH <span className="text-muted-foreground font-medium">Security</span>
           </span>
