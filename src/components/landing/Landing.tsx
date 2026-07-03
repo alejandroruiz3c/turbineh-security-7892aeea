@@ -420,12 +420,6 @@ function Paywall({
                 >
                   {t("paywall.button")} <ArrowRight className="h-4 w-4" />
                 </button>
-                <p className="text-center text-xs text-muted-foreground">{t("paywall.secure")}</p>
-                {!hasDomain && (
-                  <p className="text-center text-xs text-muted-foreground">
-                    ← <a href="#domain-input" className="underline">{t("nav.cta")}</a>
-                  </p>
-                )}
               </div>
             </div>
           </div>
