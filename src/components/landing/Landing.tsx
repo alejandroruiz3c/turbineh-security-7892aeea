@@ -240,14 +240,7 @@ function Hero({
       </div>
       <div className="mx-auto max-w-6xl px-4 pt-14 pb-20 md:px-6 md:pt-24 md:pb-28">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-card/60 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em] text-brand backdrop-blur">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-            </span>
-            SEC-DIAG · SYSTEM ONLINE
-          </span>
-          <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
+          <h1 className="text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
             {t("hero.title")}
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
