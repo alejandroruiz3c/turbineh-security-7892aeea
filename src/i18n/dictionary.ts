@@ -266,7 +266,16 @@ export const resources = {
         s4: "Execute it yourself with your favorite AI assistant",
       },
       preview: {
-        headingFor: "Preview for",
+        headingFor: "Preliminary report for",
+        reportId: "Report ID",
+        scannedAt: "Scanned",
+        findings: "potential findings",
+        summary: "Exposure summary",
+        priority: "Priority",
+        risk: "Risk",
+        impact: "Impact",
+        status: "Pending verification in your full diagnosis",
+        severity: { critical: "Critical", high: "High", medium: "Medium", low: "Low" },
         disclaimer:
           "Free preview based on potential vulnerabilities and common risks we'll check on your domain. To run the full analysis and see your concrete findings, unlock the diagnosis.",
         tag: "Checked in your diagnosis",
