@@ -229,15 +229,12 @@ function Hero({
           {error && (
             <p className="mt-2 pl-2 text-sm text-destructive">{error}</p>
           )}
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            {t("hero.trust")}
-          </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.minutes")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.once")}
+              <FileText className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.once")}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.notech")}
