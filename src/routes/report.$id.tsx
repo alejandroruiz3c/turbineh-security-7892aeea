@@ -440,15 +440,22 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
         <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[color:var(--brand-navy-2)] p-6 md:flex-row">
           <div className="flex items-center gap-3 text-sm text-[color:var(--brand-muted)]">
             <FileText className="h-5 w-5" />
-            {t("report.pdf.soon")}
+            {t("report.pdf.emailNote")}
           </div>
-          <Button
-            onClick={handleDownloadPdf}
-            className="bg-[color:var(--brand-green)] text-[color:var(--brand-navy)] hover:bg-[color:var(--brand-green-lime)]"
-          >
-            <Download className="h-4 w-4" />
-            {t("report.pdf.button")}
-          </Button>
+          <div className="flex flex-col items-center gap-2 md:items-end">
+            <Button
+              onClick={handleDownloadPdf}
+              disabled={isDownloading}
+              className="bg-[color:var(--brand-green)] text-[color:var(--brand-navy)] hover:bg-[color:var(--brand-green-lime)] disabled:opacity-60"
+            >
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {isDownloading ? t("report.pdf.loading") : t("report.pdf.button")}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
