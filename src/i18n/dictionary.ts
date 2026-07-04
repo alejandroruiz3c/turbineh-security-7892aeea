@@ -238,6 +238,7 @@ export const resources = {
       },
       verify: {
         loading: "Cargando tu diagnóstico…",
+        confirmingPayment: "Confirmando tu pago… esto puede tardar unos segundos.",
         notFoundTitle: "No hemos podido cargar este diagnóstico",
         notFoundBody: "El enlace puede haber expirado o no ser válido. Vuelve al inicio e inténtalo de nuevo.",
         backHome: "Volver al inicio",
