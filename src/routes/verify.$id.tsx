@@ -147,6 +147,10 @@ function SuccessView({
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const { t } = useTranslation();
+  useEffect(() => {
+    trackEvent("verified", { scanRequestId: scanId, lang });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
 
@@ -308,6 +312,7 @@ function VerificationView({
       setCode("");
       setAttemptsLeft(null);
       lastSubmittedCodeRef.current = null;
+      trackEvent("verify_started", { scanRequestId: scan.id, meta: { domain } });
     } catch {
       setSendError(t("verify.errors.sendFailed"));
     } finally {
