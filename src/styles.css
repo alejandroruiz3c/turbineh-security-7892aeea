@@ -108,8 +108,8 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
   --brand: oklch(0.62 0.13 220);
   --brand-2: oklch(0.68 0.14 195);
-  --cta: oklch(0.68 0.19 40);
-  --cta-foreground: oklch(1 0 0);
+  --cta: var(--brand-green);
+  --cta-foreground: var(--brand-navy);
   --brand-navy: #0F1D2E;
   --brand-navy-2: #16283C;
   --brand-green: #6FBE44;
