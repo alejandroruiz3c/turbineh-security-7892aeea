@@ -183,7 +183,7 @@ function ReportPage() {
 // -----------------------------------------------------------------------------
 // Main report view
 // -----------------------------------------------------------------------------
-function ReportView({ payload }: { payload: ReportPayload }) {
+function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
   const { report, domain, overall_score, risk_level } = payload;
