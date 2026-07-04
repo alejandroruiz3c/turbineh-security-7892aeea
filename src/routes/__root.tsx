@@ -82,7 +82,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0b1220" },
-      // Pre-launch: block all indexing. Remove at launch.
+      // GO-LIVE (Fase 8): revert to "index,follow,max-image-preview:large,max-snippet:-1".
+      // Temporary noindex while the site is public in MOCK mode (pre-Stripe).
       { name: "robots", content: "noindex,nofollow" },
       { name: "googlebot", content: "noindex,nofollow" },
       { title: "AI Cybersecurity — TurbineH Security" },

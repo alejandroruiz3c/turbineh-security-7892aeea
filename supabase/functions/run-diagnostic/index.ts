@@ -12,7 +12,7 @@
 // engine only performs GET/HEAD to a bounded set of URLs plus DoH lookups.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { makeCors } from "../_shared/cors.ts";
 import { runDiagnostic } from "../_shared/diagnostic.ts";
 
 interface Body {
@@ -23,23 +23,24 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  const preflight = handleCorsPreflight(req);
-  if (preflight) return preflight;
+  const cors = makeCors(req);
+  const pf = cors.preflight();
+  if (pf) return pf;
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return cors.json({ error: "Method not allowed" }, 405);
   }
 
   let body: Body;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+    return cors.json({ error: "Invalid JSON body" }, 400);
   }
 
   const scanRequestId = (body.scanRequestId ?? "").toString().trim();
   if (!UUID_RE.test(scanRequestId)) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -56,10 +57,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (scanErr) {
     console.error("run-diagnostic: scan query failed", scanErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
   if (!scan) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   await supabase
@@ -90,8 +91,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (upErr) {
     console.error("run-diagnostic: failed to store raw_findings", upErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
 
-  return jsonResponse(rawFindings, 200);
+  return cors.json(rawFindings, 200);
 });

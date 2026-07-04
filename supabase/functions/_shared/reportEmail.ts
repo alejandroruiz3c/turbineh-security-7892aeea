@@ -12,7 +12,7 @@ const BUCKET = "reports";
 type Json = any;
 
 function siteBase(): string {
-  return (Deno.env.get("SITE_URL") || "https://turbineh.com").replace(/\/+$/, "");
+  return (Deno.env.get("SITE_URL") || "https://security.turbineh.com").replace(/\/+$/, "");
 }
 
 function buildContent(domain: string, link: string, lang: "es" | "en") {

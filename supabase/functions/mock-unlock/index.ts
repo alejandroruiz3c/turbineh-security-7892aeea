@@ -10,28 +10,41 @@
 // 'paid_pending_verification' + paid_at, and a mock payments row linked to it.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { makeCors } from "../_shared/cors.ts";
 import { normalizeDomain, validateDomain } from "../_shared/domain.ts";
 
 interface MockUnlockBody {
   domain?: string;
   email?: string;
   lang?: "es" | "en";
+  bypassSecret?: string;
 }
 
 const MOCK_AMOUNT_CENTS = 9900; // 99.00 EUR
 
-Deno.serve(async (req: Request): Promise<Response> => {
-  const preflight = handleCorsPreflight(req);
-  if (preflight) return preflight;
+/** Constant-time string comparison. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
 
-  // --- Hard dev-only gate -------------------------------------------------
+Deno.serve(async (req: Request): Promise<Response> => {
+  const cors = makeCors(req);
+  const pf = cors.preflight();
+  if (pf) return pf;
+
+  // --- Hard gate #1: dev bypass must be explicitly enabled ----------------
+  // In production this whole endpoint is replaced by Stripe (Fase 8). Until then
+  // it stays behind BOTH a build-time flag AND a shared secret so a public
+  // visitor can browse the landing + free preview but CANNOT unlock a paid scan.
   if (Deno.env.get("DEV_BYPASS_PAYMENT") !== "true") {
-    return jsonResponse({ error: "Not found" }, 403);
+    return cors.json({ error: "Not found" }, 403);
   }
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return cors.json({ error: "Method not allowed" }, 405);
   }
 
   // --- Parse body ---------------------------------------------------------
@@ -39,18 +52,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+    return cors.json({ error: "Invalid JSON body" }, 400);
+  }
+
+  // --- Hard gate #2: shared secret (header x-bypass-secret OR body) --------
+  const expectedSecret = Deno.env.get("BYPASS_SECRET") ?? "";
+  const providedSecret =
+    req.headers.get("x-bypass-secret") ?? body.bypassSecret ?? "";
+  if (!expectedSecret || !timingSafeEqual(providedSecret, expectedSecret)) {
+    // Same opaque response as the disabled state — don't reveal the gate exists.
+    return cors.json({ error: "Not found" }, 403);
   }
 
   const rawDomain = (body.domain ?? "").toString();
   if (!rawDomain.trim()) {
-    return jsonResponse({ error: "domain is required" }, 400);
+    return cors.json({ error: "domain is required" }, 400);
   }
 
   const normalizedDomain = normalizeDomain(rawDomain);
   const validation = validateDomain(normalizedDomain);
   if (!validation.ok) {
-    return jsonResponse(
+    return cors.json(
       { error: "Invalid domain", reason: validation.reason },
       400,
     );
@@ -82,7 +104,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (scanError || !scan) {
     console.error("mock-unlock: failed to insert scan_request", scanError);
-    return jsonResponse({ error: "Could not create scan request" }, 500);
+    return cors.json({ error: "Could not create scan request" }, 500);
   }
 
   // --- Create the mock payment (best-effort link) -------------------------
@@ -101,7 +123,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     console.error("mock-unlock: failed to insert payment", paymentError);
   }
 
-  return jsonResponse(
+  return cors.json(
     {
       scanRequestId: scan.id,
       normalizedDomain: scan.normalized_domain,

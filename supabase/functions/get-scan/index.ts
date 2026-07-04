@@ -5,7 +5,7 @@
 // verification secrets, internal errors, emails, or Stripe identifiers.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { makeCors } from "../_shared/cors.ts";
 
 interface GetScanBody {
   scanRequestId?: string;
@@ -16,23 +16,24 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  const preflight = handleCorsPreflight(req);
-  if (preflight) return preflight;
+  const cors = makeCors(req);
+  const pf = cors.preflight();
+  if (pf) return pf;
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return cors.json({ error: "Method not allowed" }, 405);
   }
 
   let body: GetScanBody;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+    return cors.json({ error: "Invalid JSON body" }, 400);
   }
 
   const scanRequestId = (body.scanRequestId ?? "").toString().trim();
   if (!UUID_RE.test(scanRequestId)) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -53,14 +54,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (error) {
     // Do not leak internal error details to the client.
     console.error("get-scan: query failed", error);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
 
   if (!data) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
-  return jsonResponse(
+  return cors.json(
     {
       id: data.id,
       normalized_domain: data.normalized_domain,

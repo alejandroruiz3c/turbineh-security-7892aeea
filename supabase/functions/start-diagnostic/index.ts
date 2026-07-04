@@ -14,9 +14,11 @@
 // owns that transition.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { makeCors } from "../_shared/cors.ts";
 import { runDiagnostic } from "../_shared/diagnostic.ts";
 import { generateReport } from "../_shared/report.ts";
+import { checkRateLimit, rateLimitBody } from "../_shared/rateLimit.ts";
+import { clientIp } from "../_shared/request.ts";
 
 // Provided by the Supabase Edge runtime; lets background work outlive the response.
 declare const EdgeRuntime:
@@ -31,23 +33,24 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  const preflight = handleCorsPreflight(req);
-  if (preflight) return preflight;
+  const cors = makeCors(req);
+  const pf = cors.preflight();
+  if (pf) return pf;
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return cors.json({ error: "Method not allowed" }, 405);
   }
 
   let body: Body;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+    return cors.json({ error: "Invalid JSON body" }, 400);
   }
 
   const scanRequestId = (body.scanRequestId ?? "").toString().trim();
   if (!UUID_RE.test(scanRequestId)) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -55,6 +58,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
   });
+
+  // --- Rate limit: per-IP daily cap (the run itself is also idempotent) -----
+  const ip = clientIp(req);
+  const rlOk = await checkRateLimit(supabase, ip, "start_diagnostic_ip", 20, 86400);
+  if (!rlOk) return cors.json(rateLimitBody(), 429);
 
   const { data: scan, error: scanErr } = await supabase
     .from("scan_requests")
@@ -64,24 +72,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (scanErr) {
     console.error("start-diagnostic: scan query failed", scanErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
   if (!scan) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   // Idempotency: never start a second run. If it's already running or done,
   // just report the current status.
   if (scan.status === "processing" || scan.status === "completed") {
-    return jsonResponse({ status: scan.status }, 200);
+    return cors.json({ status: scan.status }, 200);
   }
 
   // Guard: must be a paid+verified, unconsumed scan.
   if (scan.report_consumed) {
-    return jsonResponse({ error: "This report has already been used" }, 409);
+    return cors.json({ error: "This report has already been used" }, 409);
   }
   if (scan.status !== "verified" || scan.verification_status !== "verified") {
-    return jsonResponse(
+    return cors.json(
       { error: "Scan is not verified", status: scan.status },
       409,
     );
@@ -95,10 +103,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .maybeSingle();
   if (repErr) {
     console.error("start-diagnostic: report lookup failed", repErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
   if (existingReport) {
-    return jsonResponse({ error: "A report already exists for this scan" }, 409);
+    return cors.json({ error: "A report already exists for this scan" }, 409);
   }
 
   // Flip to processing + stamp start time BEFORE returning.
@@ -111,7 +119,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .eq("id", scan.id);
   if (procErr) {
     console.error("start-diagnostic: failed to set processing", procErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
 
   // Background task: run the engine, persist findings, then generate the AI
@@ -158,5 +166,5 @@ Deno.serve(async (req: Request): Promise<Response> => {
     task.catch((e) => console.error("start-diagnostic: task error", e));
   }
 
-  return jsonResponse({ status: "processing" }, 200);
+  return cors.json({ status: "processing" }, 200);
 });

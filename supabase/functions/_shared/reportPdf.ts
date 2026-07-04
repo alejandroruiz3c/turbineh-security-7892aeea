@@ -15,16 +15,25 @@
 
 import {
   PDFDocument,
+  type PDFImage,
   StandardFonts,
   rgb,
   type PDFFont,
   type PDFPage,
   type RGB,
 } from "https://esm.sh/pdf-lib@1.17.1";
+import { LOGO_PNG_BASE64 } from "./logo.ts";
 
 // deno-lint-ignore no-explicit-any
 type Json = any;
 type Lang = "es" | "en";
+
+function b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
 
 // ---- Brand palette -------------------------------------------------------
 function hex(h: string): RGB {
@@ -342,12 +351,18 @@ function wordmark(page: PDFPage, font: PDFFont, bold: PDFFont, x: number, y: num
   return x + tw + hw;
 }
 
-function coverSlide(ctx: Ctx, report: Json, lang: Lang) {
+function coverSlide(ctx: Ctx, report: Json, lang: Lang, logo: PDFImage | null) {
   const page = ctx.doc.addPage([W, H]);
   page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: C.navy });
   page.drawRectangle({ x: 0, y: 0, width: W, height: 8, color: C.green });
-  // logo/wordmark top-left
-  wordmark(page, ctx.font, ctx.bold, M, H - 84, 1);
+  // Real logo (its navy background matches the cover) with wordmark fallback.
+  if (logo) {
+    const lw = 300;
+    const lh = lw * (logo.height / logo.width);
+    page.drawImage(logo, { x: M - 6, y: H - 56 - lh, width: lw, height: lh });
+  } else {
+    wordmark(page, ctx.font, ctx.bold, M, H - 84, 1);
+  }
   // title block, vertically centered-ish
   page.drawText(ctx.L.cover_title, { x: M, y: 250, size: 40, font: ctx.bold, color: C.white });
   page.drawText(report.domain ?? "", { x: M, y: 196, size: 30, font: ctx.bold, color: C.green });
@@ -539,7 +554,14 @@ export async function buildReportPdf(rawReport: Json, lang: Lang): Promise<Uint8
   const courier = await doc.embedFont(StandardFonts.Courier);
   const ctx: Ctx = { doc, font, bold, courier, L: T[lang], domain: report.domain ?? "" };
 
-  coverSlide(ctx, report, lang);
+  let logo: PDFImage | null = null;
+  try {
+    logo = await doc.embedPng(b64ToBytes(LOGO_PNG_BASE64));
+  } catch (_e) {
+    logo = null; // fall back to the typographic wordmark
+  }
+
+  coverSlide(ctx, report, lang, logo);
   scoreSlide(ctx, report, lang);
   startWithClaudeSlide(ctx, report, lang);
   prioritiesSlide(ctx, report, lang);

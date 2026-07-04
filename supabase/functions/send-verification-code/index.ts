@@ -18,7 +18,9 @@
 // The code is NEVER returned and NEVER stored in plaintext (salted SHA-256).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { makeCors } from "../_shared/cors.ts";
+import { checkRateLimit, rateLimitBody } from "../_shared/rateLimit.ts";
+import { clientIp } from "../_shared/request.ts";
 import {
   generateSixDigitCode,
   hashCode,
@@ -111,28 +113,29 @@ function buildEmail(code: string, domain: string, lang: "es" | "en") {
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  const preflight = handleCorsPreflight(req);
-  if (preflight) return preflight;
+  const cors = makeCors(req);
+  const pf = cors.preflight();
+  if (pf) return pf;
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return cors.json({ error: "Method not allowed" }, 405);
   }
 
   let body: Body;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+    return cors.json({ error: "Invalid JSON body" }, 400);
   }
 
   const scanRequestId = (body.scanRequestId ?? "").toString().trim();
   if (!UUID_RE.test(scanRequestId)) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   const email = (body.email ?? "").toString().trim().toLowerCase();
   if (!EMAIL_RE.test(email)) {
-    return jsonResponse(
+    return cors.json(
       { error: "Invalid email", reason: "invalid_email" },
       400,
     );
@@ -153,30 +156,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (scanErr) {
     console.error("send-verification-code: scan query failed", scanErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
   if (!scan) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   // --- Guards --------------------------------------------------------------
   if (scan.report_consumed) {
-    return jsonResponse({ error: "This report has already been used" }, 409);
+    return cors.json({ error: "This report has already been used" }, 409);
   }
   if (!SENDABLE.has(scan.status)) {
-    return jsonResponse(
+    return cors.json(
       { error: "This scan is not awaiting verification" },
       409,
     );
   }
   if (scan.status === "verified") {
-    return jsonResponse({ alreadyVerified: true }, 200);
+    return cors.json({ alreadyVerified: true }, 200);
   }
 
   // --- CORE SECURITY CHECK: email domain must match the paid domain --------
   const emailDomain = email.slice(email.lastIndexOf("@") + 1);
   if (emailDomain !== scan.normalized_domain.toLowerCase()) {
-    return jsonResponse(
+    return cors.json(
       {
         error: "Email domain does not match",
         reason: "domain_mismatch",
@@ -189,6 +192,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
+  // --- Abuse rate limits (on top of the per-scan cooldown + hourly cap) -----
+  // Per-IP daily cap and per-domain daily cap so nobody can spray codes across
+  // many scans/emails for many domains from one host.
+  const ip = clientIp(req);
+  const lang0: "es" | "en" = scan.lang === "en" ? "en" : "es";
+  const ipOk = await checkRateLimit(supabase, ip, "send_code_ip", 30, 86400);
+  const domainOk = await checkRateLimit(
+    supabase,
+    scan.normalized_domain,
+    "send_code_domain",
+    10,
+    86400,
+  );
+  if (!ipOk || !domainOk) {
+    return cors.json(rateLimitBody(lang0), 429);
+  }
+
   // --- Load existing verification row (for rate limiting + upsert) ---------
   const { data: existing, error: exErr } = await supabase
     .from("domain_verifications")
@@ -199,7 +219,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (exErr) {
     console.error("send-verification-code: verification query failed", exErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
 
   const now = Date.now();
@@ -214,7 +234,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       existing.last_sent_at &&
       now - Date.parse(existing.last_sent_at) < COOLDOWN_MS
     ) {
-      return jsonResponse(
+      return cors.json(
         {
           error: "Too soon",
           reason: "cooldown",
@@ -233,7 +253,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     ) {
       // Still inside the current hour window.
       if ((existing.send_count ?? 0) >= MAX_PER_WINDOW) {
-        return jsonResponse(
+        return cors.json(
           {
             error: "Too many requests",
             reason: "hourly_limit",
@@ -283,7 +303,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (upErr) {
     console.error("send-verification-code: upsert failed", upErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
 
   // Record the chosen method on the scan.
@@ -308,7 +328,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (!result.ok) {
     // The row is stored; surface a generic failure so the user can retry.
     console.error("send-verification-code: email send failed", result.error);
-    return jsonResponse(
+    return cors.json(
       {
         error: "Could not send the verification email",
         reason: "email_send_failed",
@@ -317,5 +337,5 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
-  return jsonResponse({ sent: true, maskedEmail: maskEmail(email) }, 200);
+  return cors.json({ sent: true, maskedEmail: maskEmail(email) }, 200);
 });

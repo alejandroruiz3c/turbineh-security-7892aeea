@@ -14,7 +14,9 @@
 //   -> 409 { error }                                         scan in a non-verifiable state
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
+import { makeCors } from "../_shared/cors.ts";
+import { checkRateLimit, rateLimitBody } from "../_shared/rateLimit.ts";
+import { clientIp } from "../_shared/request.ts";
 import { hashCode, timingSafeEqual } from "../_shared/verification.ts";
 
 interface Body {
@@ -37,23 +39,24 @@ const VERIFIABLE = new Set([
 const MAX_ATTEMPTS = 6;
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  const preflight = handleCorsPreflight(req);
-  if (preflight) return preflight;
+  const cors = makeCors(req);
+  const pf = cors.preflight();
+  if (pf) return pf;
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return cors.json({ error: "Method not allowed" }, 405);
   }
 
   let body: Body;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+    return cors.json({ error: "Invalid JSON body" }, 400);
   }
 
   const scanRequestId = (body.scanRequestId ?? "").toString().trim();
   if (!UUID_RE.test(scanRequestId)) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   const code = (body.code ?? "").toString().trim();
@@ -64,6 +67,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     auth: { persistSession: false },
   });
 
+  // --- Rate limit: cap code guesses per (scan + IP) per minute --------------
+  // (On top of the stored 6-attempt lock per scan.) Blocks rapid brute forcing.
+  const ip = clientIp(req);
+  const rlOk = await checkRateLimit(
+    supabase,
+    `${scanRequestId}:${ip}`,
+    "verify_domain",
+    10,
+    60,
+  );
+  if (!rlOk) return cors.json(rateLimitBody(), 429);
+
   // --- Load the scan -------------------------------------------------------
   const { data: scan, error: scanErr } = await supabase
     .from("scan_requests")
@@ -73,24 +88,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (scanErr) {
     console.error("verify-domain: scan query failed", scanErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
   if (!scan) {
-    return jsonResponse({ error: "Not found" }, 404);
+    return cors.json({ error: "Not found" }, 404);
   }
 
   // --- Guards --------------------------------------------------------------
   if (scan.report_consumed) {
-    return jsonResponse({ error: "This report has already been used" }, 409);
+    return cors.json({ error: "This report has already been used" }, 409);
   }
   if (!VERIFIABLE.has(scan.status)) {
-    return jsonResponse(
+    return cors.json(
       { error: "This scan is not awaiting verification" },
       409,
     );
   }
   if (scan.status === "verified") {
-    return jsonResponse({ verified: true }, 200);
+    return cors.json({ verified: true }, 200);
   }
 
   // --- Load the verification row ------------------------------------------
@@ -103,16 +118,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (dvErr) {
     console.error("verify-domain: verification query failed", dvErr);
-    return jsonResponse({ error: "Internal error" }, 500);
+    return cors.json({ error: "Internal error" }, 500);
   }
   if (!dv) {
     // No code has been sent yet for this scan.
-    return jsonResponse({ verified: false, reason: "no_code" }, 200);
+    return cors.json({ verified: false, reason: "no_code" }, 200);
   }
 
   // Idempotency at the row level too.
   if (dv.status === "verified") {
-    return jsonResponse({ verified: true }, 200);
+    return cors.json({ verified: true }, 200);
   }
 
   const now = Date.now();
@@ -131,12 +146,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
         last_verification_error: "expired",
       })
       .eq("id", scan.id);
-    return jsonResponse({ verified: false, reason: "expired" }, 200);
+    return cors.json({ verified: false, reason: "expired" }, 200);
   }
 
   // --- Attempt cap ---------------------------------------------------------
   if ((dv.attempts ?? 0) >= MAX_ATTEMPTS) {
-    return jsonResponse(
+    return cors.json(
       { verified: false, reason: "too_many_attempts" },
       200,
     );
@@ -145,7 +160,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // --- Compare -------------------------------------------------------------
   // Reject malformed codes without consuming an attempt.
   if (!/^\d{6}$/.test(code)) {
-    return jsonResponse(
+    return cors.json(
       {
         verified: false,
         reason: "invalid_code",
@@ -176,9 +191,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (dvUpErr || scanUpErr) {
       console.error("verify-domain: success update failed", dvUpErr, scanUpErr);
-      return jsonResponse({ error: "Internal error" }, 500);
+      return cors.json({ error: "Internal error" }, 500);
     }
-    return jsonResponse({ verified: true }, 200);
+    return cors.json({ verified: true }, 200);
   }
 
   // --- Failure: increment counters ----------------------------------------
@@ -197,7 +212,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     })
     .eq("id", scan.id);
 
-  return jsonResponse(
+  return cors.json(
     {
       verified: false,
       reason: "invalid_code",
