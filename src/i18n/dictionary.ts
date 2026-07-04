@@ -119,6 +119,16 @@ export const resources = {
         error: "No hemos podido iniciar tu diagnóstico. Inténtalo de nuevo en unos segundos.",
         secure: "Pago seguro. Sin suscripción.",
       },
+      sample: {
+        button: "Descarga reporte ejemplo GRATIS",
+        title: "Ve un informe de ejemplo gratis",
+        body: "Déjanos tu email y te abrimos un informe de ejemplo para que veas exactamente cómo se verá tu resultado.",
+        emailLabel: "Tu email",
+        emailPlaceholder: "tu@empresa.com",
+        emailInvalid: "Introduce un email válido.",
+        submit: "Ver informe de ejemplo",
+        privacy: "No enviamos spam. Solo para abrirte el informe de ejemplo.",
+      },
       ai: {
         title: "Lo que antes costaba miles al mes, ahora lo hace la IA.",
         body: "Hasta hoy, saber si tu web era segura significaba pagar consultores caros mes tras mes. La IA acaba de cambiar las reglas. Aquí la ponemos a trabajar para ti: detecta tus riesgos, te explica por qué importan y te entrega los pasos exactos —y los prompts listos para copiar— para resolverlos tú mismo.",
@@ -493,6 +503,16 @@ export const resources = {
         buttonLoading: "Processing…",
         error: "We couldn't start your diagnosis. Please try again in a few seconds.",
         secure: "Secure payment. No subscription.",
+      },
+      sample: {
+        button: "Download FREE sample report",
+        title: "See a free sample report",
+        body: "Leave us your email and we'll open a sample report so you can see exactly how your result will look.",
+        emailLabel: "Your email",
+        emailPlaceholder: "you@company.com",
+        emailInvalid: "Please enter a valid email.",
+        submit: "View sample report",
+        privacy: "No spam. Only to open the sample report for you.",
       },
       ai: {
         title: "What used to cost thousands a month, AI now does.",

@@ -6,6 +6,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { normalizeDomain, validateDomain } from "@/lib/domain";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
+import { SampleReportButton } from "@/components/SampleReportButton";
 import {
   Shield,
   Mail,
@@ -97,6 +98,16 @@ export function Landing() {
     setNormalized(n);
     setRawDomain(n);
     trackEvent("domain_submitted", { lang, meta: { domain: n } });
+    // Fire-and-forget lead notification (never block preview)
+    try {
+      void supabase.functions
+        .invoke("notify-lead", {
+          body: { type: "domain_submitted", domain: n, lang },
+        })
+        .catch(() => {});
+    } catch {
+      /* ignore */
+    }
     setTimeout(() => scrollToId("preview"), 60);
   };
 
@@ -330,6 +341,9 @@ function Hero({
           {error && (
             <p className="mt-2 pl-2 text-sm text-destructive">{error}</p>
           )}
+          <div className="mt-4 flex justify-center">
+            <SampleReportButton />
+          </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-brand" /> {t("hero.reassure.minutes")}
@@ -691,6 +705,8 @@ function Paywall({
                     {errorMsg}
                   </p>
                 )}
+                <SampleReportButton className="w-full" />
+
 
               </div>
             </div>
