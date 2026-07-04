@@ -112,9 +112,30 @@ export function Landing() {
     setTimeout(() => scrollToId("preview"), 60);
   };
 
-  // Fire landing_view once on mount
+  // Fire landing_view once on mount + handle Stripe cancel return
   useEffect(() => {
     trackEvent("landing_view", { lang });
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("canceled") === "1") {
+        setCanceledMsg(t("paywall.canceled"));
+        const sid = params.get("sid");
+        if (sid) {
+          try {
+            void supabase.functions
+              .invoke("trigger-retry", { body: { scanRequestId: sid } })
+              .catch(() => {});
+          } catch {
+            /* ignore */
+          }
+        }
+        // Clean the URL so the banner doesn't persist on reload
+        const url = new URL(window.location.href);
+        url.searchParams.delete("canceled");
+        url.searchParams.delete("sid");
+        window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -126,6 +147,8 @@ export function Landing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalized]);
 
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const handleCheckout = async () => {
     if (!normalized) {
       scrollToId("domain-input");
@@ -133,28 +156,34 @@ export function Landing() {
     }
     if (checkoutLoading) return;
     setCheckoutError(null);
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      setCheckoutError(t("paywall.emailRequired"));
+      scrollToId("pricing");
+      return;
+    }
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      setCheckoutError(t("paywall.emailInvalid"));
+      scrollToId("pricing");
+      return;
+    }
     setCheckoutLoading(true);
     trackEvent("unlock_clicked", { lang, meta: { domain: normalized } });
     try {
-      const { data, error } = await supabase.functions.invoke("mock-unlock", {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           domain: normalized,
-          email: email?.trim() || undefined,
+          email: trimmedEmail,
           lang,
         },
       });
       if (error) throw error;
-      const scanRequestId = (data as { scanRequestId?: string } | null)?.scanRequestId;
-      if (!scanRequestId) throw new Error("Missing scanRequestId in response");
-      await navigate({
-        to: "/verify/$id",
-        params: { id: scanRequestId },
-        search: { lang },
-      });
+      const url = (data as { url?: string } | null)?.url;
+      if (!url) throw new Error("Missing checkout url");
+      window.location.href = url;
     } catch (err) {
-      console.error("[handleCheckout] mock-unlock failed", err);
+      console.error("[handleCheckout] create-checkout-session failed", err);
       setCheckoutError(t("paywall.error"));
-    } finally {
       setCheckoutLoading(false);
     }
   };
