@@ -7,13 +7,16 @@
 //
 // POST { scanRequestId } -> 200 { status }
 //
-// IMPORTANT: on completion the status is intentionally LEFT as 'processing'. The
-// next phase (AI report generation) reads raw_findings, produces the report, and
-// moves status to 'completed'. Do not flip to 'completed' here.
+// The background task runs the engine, stores raw_findings, then chains straight
+// into AI report generation (generate-ai-report / _shared/report.ts), which
+// moves status to 'completed' (or 'failed'). A real run therefore ends at
+// 'completed'. The engine step itself never sets 'completed' — the report step
+// owns that transition.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 import { handleCorsPreflight, jsonResponse } from "../_shared/cors.ts";
 import { runDiagnostic } from "../_shared/diagnostic.ts";
+import { generateReport } from "../_shared/report.ts";
 
 // Provided by the Supabase Edge runtime; lets background work outlive the response.
 declare const EdgeRuntime:
@@ -111,8 +114,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return jsonResponse({ error: "Internal error" }, 500);
   }
 
-  // Background task: run the engine, then persist findings. Status stays
-  // 'processing' (see header note) — the report phase advances it to 'completed'.
+  // Background task: run the engine, persist findings, then generate the AI
+  // report (which advances status to 'completed', or 'failed' on error).
   const task = (async () => {
     try {
       const rawFindings = await runDiagnostic(scan.normalized_domain);
@@ -123,6 +126,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
           diagnostic_completed_at: new Date().toISOString(),
         })
         .eq("id", scan.id);
+
+      // Chain into report generation. status is still 'processing' here, which
+      // is exactly what generateReport's guard requires.
+      const rep = await generateReport(supabase, scan.id);
+      if (!rep.ok) {
+        console.error("start-diagnostic: report generation did not complete", rep.body);
+      }
     } catch (e) {
       console.error("start-diagnostic: background engine failed", e);
       await supabase
@@ -135,6 +145,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             errors: [{ section: "engine", reason: "unhandled_exception" }],
           },
           diagnostic_completed_at: new Date().toISOString(),
+          status: "failed",
         })
         .eq("id", scan.id);
     }
