@@ -230,6 +230,7 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      trackEvent("pdf_downloaded", { scanRequestId: id, lang, meta: { domain } });
     } catch (e) {
       console.error("PDF download failed", e);
       toast(t("report.pdf.error"));
