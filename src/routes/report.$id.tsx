@@ -189,6 +189,15 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
   const { report, domain, overall_score, risk_level } = payload;
 
+  useEffect(() => {
+    trackEvent("report_viewed", {
+      scanRequestId: id,
+      lang,
+      meta: { domain, overall_score, risk_level },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const issuedOn = useMemo(() => {
     const d = new Date();
     return d.toLocaleDateString(lang === "en" ? "en-GB" : "es-ES", {
