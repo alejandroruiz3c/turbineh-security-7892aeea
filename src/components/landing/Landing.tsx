@@ -6,6 +6,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { normalizeDomain, validateDomain } from "@/lib/domain";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
+import { SampleReportButton } from "@/components/SampleReportButton";
 import {
   Shield,
   Mail,
