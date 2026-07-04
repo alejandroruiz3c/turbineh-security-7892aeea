@@ -248,13 +248,21 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
                 {t("report.coverKicker")}
               </span>
             </div>
-            <Button
-              onClick={handleDownloadPdf}
-              className="bg-[color:var(--brand-green)] text-[color:var(--brand-navy)] hover:bg-[color:var(--brand-green-lime)]"
-            >
-              <Download className="h-4 w-4" />
-              {t("report.pdf.button")}
-            </Button>
+            <div className="flex flex-col items-end gap-2">
+              <Button
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="bg-[color:var(--brand-green)] text-[color:var(--brand-navy)] hover:bg-[color:var(--brand-green-lime)] disabled:opacity-60"
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                {isDownloading ? t("report.pdf.loading") : t("report.pdf.button")}
+              </Button>
+              <span className="text-xs text-[color:var(--brand-muted)]">{t("report.pdf.emailNote")}</span>
+            </div>
           </div>
 
           <h1 className="mt-14 max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-5xl">
