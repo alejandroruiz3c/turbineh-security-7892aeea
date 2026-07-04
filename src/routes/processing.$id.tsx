@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, ShieldCheck } from "lucide-react";
+import { ExitLogo } from "@/components/ExitLogo";
 
 type ScanState = {
   id: string;
@@ -208,7 +209,12 @@ function ProcessingPage() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-2xl px-4 py-20 md:px-6">{children}</div>
+      <div className="mx-auto max-w-2xl px-4 py-10 md:px-6">
+        <div className="mb-8 flex justify-center">
+          <ExitLogo />
+        </div>
+        {children}
+      </div>
     </div>
   );
 }

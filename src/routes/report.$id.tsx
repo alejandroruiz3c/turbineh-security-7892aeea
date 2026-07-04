@@ -6,7 +6,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import logoAsset from "@/assets/turbineh-mark.png.asset.json";
+import { ExitLogo } from "@/components/ExitLogo";
 import {
   Loader2,
   AlertCircle,
@@ -254,7 +254,7 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
         <div className="relative mx-auto max-w-5xl px-6 pb-24 pt-16 md:pt-24">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logoAsset.url} alt="TurbineH" className="h-9 w-auto" />
+              <ExitLogo variant="report" imgClassName="h-9 w-auto" />
               <span className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-green-lime)]">
                 {t("report.coverKicker")}
               </span>
@@ -479,7 +479,12 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[color:var(--brand-navy)] text-white">
-      <div className="mx-auto max-w-5xl px-6 py-20">{children}</div>
+      <div className="mx-auto max-w-5xl px-6 py-10">
+        <div className="mb-10 flex justify-center">
+          <ExitLogo variant="report" />
+        </div>
+        {children}
+      </div>
     </div>
   );
 }
