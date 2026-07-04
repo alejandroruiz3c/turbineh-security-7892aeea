@@ -37,3 +37,11 @@ dist-ssr
 !.env.example
 supabase/.env
 supabase/.env.*
+
+# Keys / credentials files — NEVER commit. This repo syncs to GitHub via Lovable,
+# so a committed secrets file would leak publicly.
+KEYS_TURBINEH-SECURITY.rtf
+KEYS_*
+*.rtf
+*secret*
+*credentials*
