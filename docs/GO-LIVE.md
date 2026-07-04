@@ -64,14 +64,36 @@ Secrets set in Supabase: `BYPASS_SECRET`, `SITE_URL=https://security.turbineh.co
 
 ---
 
-## 🚀 At real launch (Fase 8 — Stripe)
+## 💳 Fase 8 — Stripe (DONE in TEST mode)
 
-- [ ] **Remove the mock bypass.** Unset `DEV_BYPASS_PAYMENT` and `BYPASS_SECRET` in the
-      production Supabase env. `mock-unlock` is then dead (returns 403). Replace the unlock
-      path with the Stripe checkout + webhook flow.
-- [ ] **Remove noindex.** In `src/routes/__root.tsx` revert the robots meta to
-      `index,follow,max-image-preview:large,max-snippet:-1`.
-- [ ] Re-confirm CORS is still pinned to `https://security.turbineh.com` (drop the Lovable
-      preview origins if no longer needed for QA).
-- [ ] Re-confirm rate limits, RLS deny-all, and private storage are intact after the Stripe changes.
+- [x] **Mock is OFF.** `DEV_BYPASS_PAYMENT` unset → `mock-unlock` returns 403 (dead). The
+      ONLY path to a paid scan is now `create-checkout-session` (frontend switch = Lovable prompt).
+- [x] Real Stripe payment lifecycle wired: `create-checkout-session` → Stripe Checkout →
+      `stripe-webhook` (idempotent via `stripe_events`; handles completed/expired/failed) →
+      owner notification on every outcome + immediate client retry on non-success.
+- [x] **7-day recovery campaign**: `payment-recovery` (daily pg_cron, Vault-held `CRON_SECRET`),
+      `resume-checkout` (link target), immediate `trigger-retry` (cancel path). Caps: 7 emails /
+      7 days / ~24h gap, stops on payment. Verified in test mode.
+- [x] Owner notifications to `STRIPE_NOTIFY_EMAIL` (alejandroruiz3c@gmail.com) — paid / abandoned /
+      failed, all delivered.
+
+**Secrets set:** `STRIPE_WEBHOOK_SECRET`, `STRIPE_NOTIFY_EMAIL`, `CRON_SECRET`, and a PLACEHOLDER
+`STRIPE_SECRET_KEY` (webhook handler tested via signed simulation). **Still needed to finish TEST
+e2e + go LIVE:** real `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, and the live `STRIPE_WEBHOOK_SECRET`
+from the webhook endpoint (see below).
+
+---
+
+## 🚀 At real launch (LIVE Stripe)
+
+- [ ] **Live Stripe secrets.** Set the LIVE `STRIPE_SECRET_KEY` and LIVE `STRIPE_PRICE_ID` in
+      Supabase. Create a LIVE webhook endpoint (→ deployed `stripe-webhook` URL, events:
+      `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`)
+      and set its signing secret as `STRIPE_WEBHOOK_SECRET` (replaces the placeholder).
+- [ ] **Confirm mock stays off** — `DEV_BYPASS_PAYMENT` and `BYPASS_SECRET` must be unset in prod.
+- [ ] **Remove noindex.** In `src/routes/__root.tsx` revert robots to
+      `index,follow,max-image-preview:large,max-snippet:-1` (and drop the `googlebot` noindex).
+- [ ] Re-confirm CORS pinned to `https://security.turbineh.com` (drop Lovable preview origins if
+      no longer needed), rate limits, RLS deny-all, private storage intact.
+- [ ] Confirm the daily `payment-recovery` pg_cron job is active (Vault `cron_secret`).
 - [ ] Keys file still gitignored + never committed; secrets only in Supabase.
