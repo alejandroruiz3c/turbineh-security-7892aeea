@@ -84,7 +84,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#0b1220" },
       { name: "robots", content: "index,follow" },
       { title: "AI Cybersecurity — TurbineH Security" },
-      { title: "AI Cybersecurity — TurbineH Security" },
       {
         name: "description",
         content:
