@@ -65,6 +65,7 @@ export function Landing() {
   const [email, setEmail] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [canceledMsg, setCanceledMsg] = useState<string | null>(null);
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
