@@ -215,6 +215,11 @@ export function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <ScrollProgress />
       <Header />
+      {canceledMsg && (
+        <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-800 dark:text-amber-200">
+          {canceledMsg}
+        </div>
+      )}
       <main>
         <Hero
           raw={rawDomain}
