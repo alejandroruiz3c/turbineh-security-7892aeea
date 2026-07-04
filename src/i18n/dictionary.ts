@@ -117,6 +117,9 @@ export const resources = {
         button: "Ejecutar análisis y plan de acción completo",
         buttonLoading: "Procesando…",
         error: "No hemos podido iniciar tu diagnóstico. Inténtalo de nuevo en unos segundos.",
+        emailRequired: "Introduce tu email para continuar.",
+        emailInvalid: "Introduce un email válido.",
+        canceled: "Pago cancelado. Puedes intentarlo cuando quieras.",
         secure: "Pago seguro. Sin suscripción.",
       },
       sample: {
