@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { LangToggle } from "@/components/LangToggle";
 import { normalizeDomain, validateDomain } from "@/lib/domain";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import {
   Shield,
   Mail,
@@ -95,8 +96,23 @@ export function Landing() {
     setInputError(null);
     setNormalized(n);
     setRawDomain(n);
+    trackEvent("domain_submitted", { lang, meta: { domain: n } });
     setTimeout(() => scrollToId("preview"), 60);
   };
+
+  // Fire landing_view once on mount
+  useEffect(() => {
+    trackEvent("landing_view", { lang });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fire preview_shown when a preview is rendered for a normalized domain
+  useEffect(() => {
+    if (normalized) {
+      trackEvent("preview_shown", { lang, meta: { domain: normalized } });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalized]);
 
   const handleCheckout = async () => {
     if (!normalized) {
