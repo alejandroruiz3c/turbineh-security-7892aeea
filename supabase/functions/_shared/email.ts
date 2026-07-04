@@ -8,12 +8,22 @@
 // This helper is intentionally provider-specific but dependency-free so it can
 // be reused by any Edge Function (verification codes now, report delivery later).
 
+export interface EmailAttachment {
+  filename: string;
+  /** Base64-encoded file content (no data: prefix). */
+  content: string;
+  /** Optional content type, e.g. "application/pdf". */
+  contentType?: string;
+}
+
 export interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
   /** Plain-text fallback. Strongly recommended for deliverability. */
   text?: string;
+  /** Optional file attachments (Resend accepts base64 `content`). */
+  attachments?: EmailAttachment[];
 }
 
 export interface SendEmailResult {
@@ -57,6 +67,13 @@ export async function sendEmail(
     html: params.html,
   };
   if (params.text) payload.text = params.text;
+  if (params.attachments && params.attachments.length > 0) {
+    payload.attachments = params.attachments.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      ...(a.contentType ? { content_type: a.contentType } : {}),
+    }));
+  }
 
   let res: Response;
   try {

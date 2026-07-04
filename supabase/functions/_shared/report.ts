@@ -19,6 +19,8 @@
 //      never a confirmed exposure.
 
 import { computeScore, type ScoredFinding, type Severity } from "./score.ts";
+import { ensureReportPdf } from "./pdfStore.ts";
+import { sendReportEmail } from "./reportEmail.ts";
 
 const ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-fable-5";
@@ -351,7 +353,7 @@ export interface GenerateResult {
 export async function generateReport(supabase: any, scanRequestId: string): Promise<GenerateResult> {
   const { data: scan, error: scanErr } = await supabase
     .from("scan_requests")
-    .select("id, normalized_domain, lang, status, report_consumed, raw_findings")
+    .select("id, normalized_domain, lang, status, report_consumed, raw_findings, email")
     .eq("id", scanRequestId)
     .maybeSingle();
 
@@ -473,6 +475,24 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
   if (updErr) {
     console.error("generateReport: status update failed", updErr);
     // The report row exists; surface success but log the status inconsistency.
+  }
+
+  // --- Post-report chain: build the PDF, then email the buyer (best-effort) ---
+  // Both are non-fatal: the report is already saved and status is 'completed'.
+  // Both remain independently callable via generate-pdf / send-report-email.
+  try {
+    const pdf = await ensureReportPdf(supabase, scan.id, { force: false });
+    if (!pdf.ok) console.error("generateReport: PDF step did not complete", pdf.body);
+  } catch (e) {
+    console.error("generateReport: PDF step threw", e);
+  }
+  if (scan.email) {
+    try {
+      const mail = await sendReportEmail(supabase, scan.id);
+      if (!mail.ok) console.error("generateReport: email step did not complete", mail.body);
+    } catch (e) {
+      console.error("generateReport: email step threw", e);
+    }
   }
 
   return {
