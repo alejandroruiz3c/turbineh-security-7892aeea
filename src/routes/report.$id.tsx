@@ -177,7 +177,7 @@ function ReportPage() {
     );
   }
 
-  return <ReportView payload={state.data} />;
+  return <ReportView id={id} payload={state.data} />;
 }
 
 // -----------------------------------------------------------------------------
