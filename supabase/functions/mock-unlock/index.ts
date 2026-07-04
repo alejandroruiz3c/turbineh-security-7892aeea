@@ -12,6 +12,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 import { makeCors } from "../_shared/cors.ts";
 import { normalizeDomain, validateDomain } from "../_shared/domain.ts";
+import { getOrCreateCustomerId } from "../_shared/customer.ts";
 
 interface MockUnlockBody {
   domain?: string;
@@ -88,6 +89,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     auth: { persistSession: false },
   });
 
+  // --- Canonical customer by email (one user per email; reused if it already
+  // exists as a free lead / prior domain) ----------------------------------
+  const customerId = await getOrCreateCustomerId(supabase, email, lang);
+
   // --- Create the scan request (already "paid") ---------------------------
   const { data: scan, error: scanError } = await supabase
     .from("scan_requests")
@@ -96,6 +101,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       normalized_domain: normalizedDomain,
       email,
       lang,
+      customer_id: customerId,
       status: "paid_pending_verification",
       paid_at: new Date().toISOString(),
     })
@@ -114,6 +120,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     currency: "eur",
     payment_status: "mock_paid",
     customer_email: email,
+    customer_id: customerId,
     is_mock: true,
   });
 

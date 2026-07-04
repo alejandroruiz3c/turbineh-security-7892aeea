@@ -19,6 +19,7 @@ import { checkRateLimit } from "../_shared/rateLimit.ts";
 import { clientIp, hashIp } from "../_shared/request.ts";
 import { normalizeDomain, validateDomain } from "../_shared/domain.ts";
 import { sendEmail } from "../_shared/email.ts";
+import { getOrCreateCustomerId } from "../_shared/customer.ts";
 
 // Provided by the Supabase Edge runtime; lets the insert+email outlive the response.
 declare const EdgeRuntime:
@@ -98,12 +99,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const task = (async () => {
     try {
       const ipHash = await hashIp(ip);
+      // Link example_report leads to the canonical customer (one user per email).
+      const customerId =
+        type === "example_report" ? await getOrCreateCustomerId(supabase, email, lang) : null;
       await supabase.from("leads").insert({
         type,
         email,
         domain,
         lang,
         ip_hash: ipHash,
+        customer_id: customerId,
       });
 
       const notifyTo = Deno.env.get("NOTIFY_EMAIL");
