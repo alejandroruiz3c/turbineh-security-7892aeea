@@ -705,6 +705,8 @@ function Paywall({
                     {errorMsg}
                   </p>
                 )}
+                <SampleReportButton className="w-full" />
+
 
               </div>
             </div>
