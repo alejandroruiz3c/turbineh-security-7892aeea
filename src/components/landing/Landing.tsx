@@ -98,6 +98,16 @@ export function Landing() {
     setNormalized(n);
     setRawDomain(n);
     trackEvent("domain_submitted", { lang, meta: { domain: n } });
+    // Fire-and-forget lead notification (never block preview)
+    try {
+      void supabase.functions
+        .invoke("notify-lead", {
+          body: { type: "domain_submitted", domain: n, lang },
+        })
+        .catch(() => {});
+    } catch {
+      /* ignore */
+    }
     setTimeout(() => scrollToId("preview"), 60);
   };
 
