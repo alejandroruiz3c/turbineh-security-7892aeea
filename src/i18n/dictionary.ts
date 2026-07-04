@@ -117,6 +117,9 @@ export const resources = {
         button: "Ejecutar análisis y plan de acción completo",
         buttonLoading: "Procesando…",
         error: "No hemos podido iniciar tu diagnóstico. Inténtalo de nuevo en unos segundos.",
+        emailRequired: "Introduce tu email para continuar.",
+        emailInvalid: "Introduce un email válido.",
+        canceled: "Pago cancelado. Puedes intentarlo cuando quieras.",
         secure: "Pago seguro. Sin suscripción.",
       },
       sample: {
@@ -235,6 +238,7 @@ export const resources = {
       },
       verify: {
         loading: "Cargando tu diagnóstico…",
+        confirmingPayment: "Confirmando tu pago… esto puede tardar unos segundos.",
         notFoundTitle: "No hemos podido cargar este diagnóstico",
         notFoundBody: "El enlace puede haber expirado o no ser válido. Vuelve al inicio e inténtalo de nuevo.",
         backHome: "Volver al inicio",
@@ -502,6 +506,9 @@ export const resources = {
         button: "Run full analysis and action plan",
         buttonLoading: "Processing…",
         error: "We couldn't start your diagnosis. Please try again in a few seconds.",
+        emailRequired: "Enter your email to continue.",
+        emailInvalid: "Please enter a valid email.",
+        canceled: "Payment canceled. You can try again whenever you like.",
         secure: "Secure payment. No subscription.",
       },
       sample: {
@@ -620,6 +627,7 @@ export const resources = {
       },
       verify: {
         loading: "Loading your diagnosis…",
+        confirmingPayment: "Confirming your payment… this can take a few seconds.",
         notFoundTitle: "We couldn't load this diagnosis",
         notFoundBody: "The link may have expired or is invalid. Go back home and try again.",
         backHome: "Back to home",

@@ -50,6 +50,40 @@ function Placeholder({ title, body }: { title: string; body: string }) {
 
 export { Placeholder };
 
+function PendingPaymentView({
+  scanId,
+  onRefresh,
+}: {
+  scanId: string;
+  onRefresh: () => void;
+}) {
+  const { t } = useTranslation();
+  useEffect(() => {
+    const interval = setInterval(() => {
+      onRefresh();
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [onRefresh]);
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-2xl px-4 py-10 md:px-6">
+        <div className="mb-8 flex justify-center">
+          <ExitLogo />
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-base text-muted-foreground">
+              {t("verify.confirmingPayment")}
+            </p>
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">{scanId.slice(0, 8)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/verify/$id")({
   component: VerifyPage,
 });
@@ -64,24 +98,24 @@ function VerifyPage() {
   const [scan, setScan] = useState<ScanState | null>(null);
   const [loadError, setLoadError] = useState(false);
 
-  const loadScan = useCallback(async () => {
-    setLoading(true);
+  const loadScan = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setLoadError(false);
     try {
       const { data, error } = await supabase.functions.invoke("get-scan", {
         body: { scanRequestId: id },
       });
       if (error || !data || (data as { error?: string }).error) {
-        setScan(null);
+        if (!silent) setScan(null);
         setLoadError(true);
       } else {
         setScan(data as ScanState);
       }
     } catch {
-      setScan(null);
+      if (!silent) setScan(null);
       setLoadError(true);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id]);
 
@@ -118,6 +152,7 @@ function VerifyPage() {
   const isVerifiable =
     scan.status === "paid_pending_verification" ||
     scan.status === "verification_failed";
+  const isPendingPayment = scan.status === "pending_payment";
 
   if (isVerified) {
     return (
@@ -126,6 +161,12 @@ function VerifyPage() {
         lang={lang}
         navigate={navigate}
       />
+    );
+  }
+
+  if (isPendingPayment) {
+    return (
+      <PendingPaymentView scanId={scan.id} onRefresh={() => loadScan(true)} />
     );
   }
 
