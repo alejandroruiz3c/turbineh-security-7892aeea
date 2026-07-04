@@ -627,6 +627,7 @@ export const resources = {
       },
       verify: {
         loading: "Loading your diagnosis…",
+        confirmingPayment: "Confirming your payment… this can take a few seconds.",
         notFoundTitle: "We couldn't load this diagnosis",
         notFoundBody: "The link may have expired or is invalid. Go back home and try again.",
         backHome: "Back to home",
