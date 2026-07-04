@@ -10,7 +10,8 @@ export type TrackEventType =
   | "verify_started"
   | "verified"
   | "report_viewed"
-  | "pdf_downloaded";
+  | "pdf_downloaded"
+  | "sample_report_requested";
 
 export function trackEvent(
   event_type: TrackEventType,
