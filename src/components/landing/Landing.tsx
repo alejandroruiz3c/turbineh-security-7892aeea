@@ -147,44 +147,15 @@ export function Landing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalized]);
 
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/6oU14ofxUfqR4cfdLe2oE03";
 
-  const handleCheckout = async () => {
-    if (!normalized) {
-      scrollToId("domain-input");
-      return;
-    }
-    if (checkoutLoading) return;
-    setCheckoutError(null);
-    const trimmedEmail = email.trim().toLowerCase();
-    if (!trimmedEmail) {
-      setCheckoutError(t("paywall.emailRequired"));
-      scrollToId("pricing");
-      return;
-    }
-    if (!EMAIL_RE.test(trimmedEmail)) {
-      setCheckoutError(t("paywall.emailInvalid"));
-      scrollToId("pricing");
-      return;
-    }
-    setCheckoutLoading(true);
-    trackEvent("unlock_clicked", { lang, meta: { domain: normalized } });
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-        body: {
-          domain: normalized,
-          email: trimmedEmail,
-          lang,
-        },
-      });
-      if (error) throw error;
-      const url = (data as { url?: string } | null)?.url;
-      if (!url) throw new Error("Missing checkout url");
-      window.location.href = url;
-    } catch (err) {
-      console.error("[handleCheckout] create-checkout-session failed", err);
-      setCheckoutError(t("paywall.error"));
-      setCheckoutLoading(false);
+  const handleCheckout = () => {
+    trackEvent("unlock_clicked", {
+      lang,
+      meta: { domain: normalized ?? undefined },
+    });
+    if (typeof window !== "undefined") {
+      window.open(STRIPE_CHECKOUT_URL, "_blank", "noopener,noreferrer");
     }
   };
 
