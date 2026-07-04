@@ -197,8 +197,35 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
     });
   }, [lang]);
 
-  const handleDownloadPdf = () => {
-    toast(t("report.pdf.soon"));
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-pdf", {
+        body: { scanRequestId: id },
+      });
+      if (error) throw error;
+      const result = data as { signedUrl?: string; filename?: string } | null;
+      const signedUrl = result?.signedUrl;
+      if (!signedUrl || typeof signedUrl !== "string") {
+        throw new Error("No signed URL returned");
+      }
+      const a = document.createElement("a");
+      a.href = signedUrl;
+      a.download = result?.filename || `TurbineH-Diagnostico-${domain}.pdf`;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error("PDF download failed", e);
+      toast(t("report.pdf.error"));
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
