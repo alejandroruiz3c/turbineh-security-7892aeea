@@ -356,6 +356,21 @@ export const resources = {
           emailNote: "También te hemos enviado el informe por email.",
         },
       },
+      exitLogo: {
+        aria: "Volver al inicio",
+        cancel: "Continuar aquí",
+        confirm: "Sí, salir",
+        default: {
+          title: "¿Deseas abandonar?",
+          body: "Si continúas abandonarás el proceso y no se completará. ¿Deseas abandonar?",
+        },
+        report: {
+          title: "¿Estás seguro de salir?",
+          body: "Asegúrate de descargar antes tu reporte o se perderá. ¿Estás seguro de salir?",
+        },
+      },
+
+
 
     },
   },
