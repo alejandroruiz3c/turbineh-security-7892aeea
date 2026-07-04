@@ -166,7 +166,7 @@ function VerifyPage() {
 
   if (isPendingPayment) {
     return (
-      <PendingPaymentView scanId={scan.id} onRefresh={loadScan} />
+      <PendingPaymentView scanId={scan.id} onRefresh={() => loadScan(true)} />
     );
   }
 
