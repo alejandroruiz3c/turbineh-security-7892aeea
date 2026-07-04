@@ -113,13 +113,8 @@ function VerifyPage() {
     return (
       <SuccessView
         scanId={scan.id}
-        onRun={() =>
-          navigate({
-            to: "/processing/$id",
-            params: { id: scan.id },
-            search: { lang } as never,
-          })
-        }
+        lang={lang}
+        navigate={navigate}
       />
     );
   }
