@@ -122,6 +122,7 @@ export function Landing() {
     if (checkoutLoading) return;
     setCheckoutError(null);
     setCheckoutLoading(true);
+    trackEvent("unlock_clicked", { lang, meta: { domain: normalized } });
     try {
       const { data, error } = await supabase.functions.invoke("mock-unlock", {
         body: {
