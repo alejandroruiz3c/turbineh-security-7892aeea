@@ -504,6 +504,16 @@ export const resources = {
         error: "We couldn't start your diagnosis. Please try again in a few seconds.",
         secure: "Secure payment. No subscription.",
       },
+      sample: {
+        button: "Download FREE sample report",
+        title: "See a free sample report",
+        body: "Leave us your email and we'll open a sample report so you can see exactly how your result will look.",
+        emailLabel: "Your email",
+        emailPlaceholder: "you@company.com",
+        emailInvalid: "Please enter a valid email.",
+        submit: "View sample report",
+        privacy: "No spam. Only to open the sample report for you.",
+      },
       ai: {
         title: "What used to cost thousands a month, AI now does.",
         body: "Until today, knowing if your site was secure meant paying expensive consultants month after month. AI just changed the rules. We put it to work for you: it detects your risks, explains why they matter, and hands you the exact steps — and ready-to-copy prompts — to fix them yourself.",
