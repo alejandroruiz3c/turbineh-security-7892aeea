@@ -1,3 +1,2 @@
-# Pre-launch: block all indexing. Remove at launch.
 User-agent: *
-Disallow: /
+Allow: /
