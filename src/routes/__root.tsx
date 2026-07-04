@@ -82,7 +82,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0b1220" },
-      { name: "robots", content: "index,follow,max-image-preview:large,max-snippet:-1" },
+      // Pre-launch: block all indexing. Remove at launch.
+      { name: "robots", content: "noindex,nofollow" },
+      { name: "googlebot", content: "noindex,nofollow" },
       { title: "AI Cybersecurity — TurbineH Security" },
       {
         name: "description",

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -146,6 +147,10 @@ function SuccessView({
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const { t } = useTranslation();
+  useEffect(() => {
+    trackEvent("verified", { scanRequestId: scanId, lang });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
 
@@ -307,6 +312,7 @@ function VerificationView({
       setCode("");
       setAttemptsLeft(null);
       lastSubmittedCodeRef.current = null;
+      trackEvent("verify_started", { scanRequestId: scan.id, meta: { domain } });
     } catch {
       setSendError(t("verify.errors.sendFailed"));
     } finally {

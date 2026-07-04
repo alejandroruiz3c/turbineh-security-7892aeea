@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -188,6 +189,15 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
   const { report, domain, overall_score, risk_level } = payload;
 
+  useEffect(() => {
+    trackEvent("report_viewed", {
+      scanRequestId: id,
+      lang,
+      meta: { domain, overall_score, risk_level },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const issuedOn = useMemo(() => {
     const d = new Date();
     return d.toLocaleDateString(lang === "en" ? "en-GB" : "es-ES", {
@@ -220,6 +230,7 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      trackEvent("pdf_downloaded", { scanRequestId: id, lang, meta: { domain } });
     } catch (e) {
       console.error("PDF download failed", e);
       toast(t("report.pdf.error"));
