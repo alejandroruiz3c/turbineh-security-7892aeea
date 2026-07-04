@@ -351,7 +351,9 @@ export const resources = {
         disclaimer: { section: "Aviso legal", title: "Disclaimer" },
         pdf: {
           button: "Descargar informe en PDF",
-          soon: "La descarga en PDF se activará en la próxima fase.",
+          loading: "Generando PDF…",
+          error: "No hemos podido generar el PDF. Inténtalo de nuevo.",
+          emailNote: "También te hemos enviado el informe por email.",
         },
       },
 
@@ -709,7 +711,9 @@ export const resources = {
         disclaimer: { section: "Legal notice", title: "Disclaimer" },
         pdf: {
           button: "Download PDF report",
-          soon: "PDF download will be enabled in the next phase.",
+          loading: "Generating PDF…",
+          error: "We couldn't generate the PDF. Please try again.",
+          emailNote: "We've also emailed you the report.",
         },
       },
 
