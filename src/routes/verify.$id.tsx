@@ -118,6 +118,7 @@ function VerifyPage() {
   const isVerifiable =
     scan.status === "paid_pending_verification" ||
     scan.status === "verification_failed";
+  const isPendingPayment = scan.status === "pending_payment";
 
   if (isVerified) {
     return (
@@ -126,6 +127,12 @@ function VerifyPage() {
         lang={lang}
         navigate={navigate}
       />
+    );
+  }
+
+  if (isPendingPayment) {
+    return (
+      <PendingPaymentView scanId={scan.id} onRefresh={loadScan} />
     );
   }
 
