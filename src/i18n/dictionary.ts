@@ -505,6 +505,9 @@ export const resources = {
         button: "Run full analysis and action plan",
         buttonLoading: "Processing…",
         error: "We couldn't start your diagnosis. Please try again in a few seconds.",
+        emailRequired: "Enter your email to continue.",
+        emailInvalid: "Please enter a valid email.",
+        canceled: "Payment canceled. You can try again whenever you like.",
         secure: "Secure payment. No subscription.",
       },
       sample: {
