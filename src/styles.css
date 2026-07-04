@@ -63,6 +63,13 @@
   --color-brand-2: var(--brand-2);
   --color-cta: var(--cta);
   --color-cta-foreground: var(--cta-foreground);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-2: var(--brand-navy-2);
+  --color-brand-green: var(--brand-green);
+  --color-brand-green-lime: var(--brand-green-lime);
+  --color-brand-green-dark: var(--brand-green-dark);
+  --color-brand-muted: var(--brand-muted);
+
 }
 
 :root {
@@ -103,6 +110,13 @@
   --brand-2: oklch(0.68 0.14 195);
   --cta: oklch(0.68 0.19 40);
   --cta-foreground: oklch(1 0 0);
+  --brand-navy: #0F1D2E;
+  --brand-navy-2: #16283C;
+  --brand-green: #6FBE44;
+  --brand-green-lime: #8FCB3F;
+  --brand-green-dark: #3E9A34;
+  --brand-muted: #A7B6C7;
+
 }
 
 .dark {
