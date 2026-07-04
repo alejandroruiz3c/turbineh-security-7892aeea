@@ -98,24 +98,24 @@ function VerifyPage() {
   const [scan, setScan] = useState<ScanState | null>(null);
   const [loadError, setLoadError] = useState(false);
 
-  const loadScan = useCallback(async () => {
-    setLoading(true);
+  const loadScan = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setLoadError(false);
     try {
       const { data, error } = await supabase.functions.invoke("get-scan", {
         body: { scanRequestId: id },
       });
       if (error || !data || (data as { error?: string }).error) {
-        setScan(null);
+        if (!silent) setScan(null);
         setLoadError(true);
       } else {
         setScan(data as ScanState);
       }
     } catch {
-      setScan(null);
+      if (!silent) setScan(null);
       setLoadError(true);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id]);
 
