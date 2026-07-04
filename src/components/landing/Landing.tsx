@@ -57,7 +57,7 @@ function scrollToId(id: string) {
 export function Landing() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
-  const navigate = useNavigate();
+  // navigate not needed here anymore
 
   const [rawDomain, setRawDomain] = useState("");
   const [normalized, setNormalized] = useState<string | null>(null);
