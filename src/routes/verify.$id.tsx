@@ -136,8 +136,43 @@ function VerifyPage() {
   );
 }
 
-function SuccessView({ scanId, onRun }: { scanId: string; onRun: () => void }) {
+function SuccessView({
+  scanId,
+  lang,
+  navigate,
+}: {
+  scanId: string;
+  lang: string;
+  navigate: ReturnType<typeof useNavigate>;
+}) {
   const { t } = useTranslation();
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+
+  async function handleRun() {
+    setStarting(true);
+    setStartError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("start-diagnostic", {
+        body: { scanRequestId: scanId },
+      });
+      const payload = data as { status?: string; error?: string } | null;
+      if (error || !payload || payload.error) {
+        setStartError(t("processing.startFailed"));
+        setStarting(false);
+        return;
+      }
+      navigate({
+        to: "/processing/$id",
+        params: { id: scanId },
+        search: { lang } as never,
+      });
+    } catch {
+      setStartError(t("processing.startFailed"));
+      setStarting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-2xl px-4 py-20 md:px-6">
@@ -152,14 +187,27 @@ function SuccessView({ scanId, onRun }: { scanId: string; onRun: () => void }) {
           </div>
           <p className="mt-4 text-muted-foreground">{t("verify.successBody")}</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button size="lg" onClick={onRun} className="gap-2">
-              <ShieldCheck className="h-5 w-5" />
-              {t("verify.runCta")}
+            <Button size="lg" onClick={handleRun} disabled={starting} className="gap-2">
+              {starting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  {t("processing.starting")}
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="h-5 w-5" />
+                  {t("verify.runCta")}
+                </>
+              )}
             </Button>
-            <span className="text-xs text-muted-foreground">
-              {t("verify.runCtaStubNote")} · {scanId.slice(0, 8)}
-            </span>
+            <span className="text-xs text-muted-foreground">{scanId.slice(0, 8)}</span>
           </div>
+          {startError && (
+            <div className="mt-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{startError}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
