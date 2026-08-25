@@ -140,12 +140,12 @@ export const resources = {
         close: "Entendido",
         report_limit_reached: {
           title: "Ya generaste tu informe gratuito",
-          body: "Ya existe un diagnóstico gratuito asociado a {email} para {domain}.",
+          body: "Ya existe un diagnóstico gratuito asociado a {{email}} para {{domain}}.",
           hint: "Hemos limitado el servicio a un informe gratuito por email para poder mantenerlo disponible sin coste para más negocios.",
         },
         daily_budget_reached: {
           title: "Hoy hemos alcanzado el límite de diagnósticos",
-          body: "Tu solicitud para {domain} no se ha perdido, pero ahora mismo no podemos iniciar nuevos análisis.",
+          body: "Tu solicitud para {{domain}} no se ha perdido, pero ahora mismo no podemos iniciar nuevos análisis.",
           hint: "Vuelve a intentarlo mañana. Este límite nos ayuda a mantener el diagnóstico gratuito y estable para todos.",
         },
       },
@@ -602,12 +602,12 @@ export const resources = {
         close: "Got it",
         report_limit_reached: {
           title: "You already generated your free report",
-          body: "There is already a free diagnosis associated with {email} for {domain}.",
+          body: "There is already a free diagnosis associated with {{email}} for {{domain}}.",
           hint: "We limit the service to one free report per email so we can keep it available at no cost for more businesses.",
         },
         daily_budget_reached: {
           title: "Today's diagnosis limit has been reached",
-          body: "Your request for {domain} hasn't been lost, but we can't start new analyses right now.",
+          body: "Your request for {{domain}} hasn't been lost, but we can't start new analyses right now.",
           hint: "Please try again tomorrow. This limit helps us keep the free diagnosis stable and available for everyone.",
         },
       },
