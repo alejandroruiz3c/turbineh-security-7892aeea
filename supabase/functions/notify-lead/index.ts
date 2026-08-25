@@ -136,17 +136,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     phone = field(body.phone);
     company = field(body.company);
   }
-  // Only the bottom-of-site CTA makes them mandatory. For free_diagnosis they are
-  // best-effort passengers: refusing the notification over a missing phone would
-  // lose us a lead that has already started a scan.
+  // Only the bottom-of-site CTA treats them as mandatory. For free_diagnosis they
+  // are best-effort passengers: refusing the notification over a missing phone
+  // would lose us a lead that has already started a scan.
+  //
+  // A turbineh_lead missing fields still gets RECORDED and NOTIFIED, flagged as
+  // incomplete, before we answer 400. This is not belt-and-braces, it is the
+  // difference between a lead we can still call and one that vanished: a caller
+  // that does not render the four inputs (or ignores the response, as the current
+  // landing does) would otherwise drop the visitor on the floor while showing
+  // them a success message. The 400 + field list is still returned so a form that
+  // DOES render them can highlight what is wrong.
+  let incomplete: string[] = [];
   if (type === "turbineh_lead") {
-    const missing: string[] = [];
-    if (name.length < 2) missing.push("name");
-    if (!validPhone(phone)) missing.push("phone");
-    if (company.length < 2) missing.push("company");
-    if (missing.length > 0) {
-      return cors.json({ ok: false, error: "invalid_fields", fields: missing }, 400);
-    }
+    if (name.length < 2) incomplete.push("name");
+    if (!validPhone(phone)) incomplete.push("phone");
+    if (company.length < 2) incomplete.push("company");
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -228,13 +233,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (phone) lines.push(["Teléfono", phone]);
         if (blocked) lines.push(["Bloqueado por", blocked]);
       } else {
-        subject = "Nuevo lead TurbineH (call)";
+        subject = incomplete.length > 0
+          ? "Nuevo lead TurbineH (call) — FORM INCOMPLETO"
+          : "Nuevo lead TurbineH (call)";
         lines.push(
-          ["Nombre", name],
-          ["Empresa", company],
-          ["Teléfono", phone],
+          ["Nombre", name || "(no facilitado)"],
+          ["Empresa", company || "(no facilitado)"],
+          ["Teléfono", phone || "(no facilitado)"],
           ["Email", email!],
         );
+        if (incomplete.length > 0) {
+          lines.push(["Campos que faltan", incomplete.join(", ")]);
+        }
       }
       lines.push(["Lang", lang], ["UTC", ts]);
 
@@ -264,6 +274,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     EdgeRuntime.waitUntil(task);
   } else {
     task.catch((e) => console.error("notify-lead: task error", e));
+  }
+
+  // Recorded either way (see above); the 400 only tells a well-behaved form which
+  // fields to highlight.
+  if (incomplete.length > 0) {
+    return cors.json({ ok: false, error: "invalid_fields", fields: incomplete }, 400);
   }
 
   return cors.json({ ok: true }, 200);
