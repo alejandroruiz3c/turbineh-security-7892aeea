@@ -494,23 +494,118 @@ const SEV_STYLES: Record<
   },
 };
 
+export type Lead = { name: string; phone: string; email: string; company: string };
+
+/* ---------------- LEAD FORM ---------------- */
+function LeadForm({
+  lead,
+  setLead,
+  onSubmit,
+  loading,
+  errorMsg,
+  compact,
+}: {
+  lead: Lead;
+  setLead: (v: Lead) => void;
+  onSubmit: () => void;
+  loading: boolean;
+  errorMsg: string | null;
+  compact?: boolean;
+}) {
+  const { t } = useTranslation();
+  const field =
+    "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20";
+  const set = (k: keyof Lead) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setLead({ ...lead, [k]: e.target.value });
+
+  const fields: { k: keyof Lead; label: string; ph: string; type: string; auto: string }[] = [
+    { k: "name", label: "nameLabel", ph: "namePlaceholder", type: "text", auto: "name" },
+    { k: "company", label: "companyLabel", ph: "companyPlaceholder", type: "text", auto: "organization" },
+    { k: "email", label: "emailLabel", ph: "emailPlaceholder", type: "email", auto: "email" },
+    { k: "phone", label: "phoneLabel", ph: "phonePlaceholder", type: "tel", auto: "tel" },
+  ];
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      noValidate
+      className="space-y-4"
+    >
+      <div>
+        <h3 className="text-base font-semibold tracking-tight">{t("paywall.formTitle")}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">{t("paywall.formHint")}</p>
+      </div>
+      <div className={compact ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+        {fields.map((f) => (
+          <div key={f.k}>
+            <label
+              htmlFor={`lead-${compact ? "b" : "a"}-${f.k}`}
+              className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              {t(`paywall.${f.label}`)} <span className="text-cta">*</span>
+            </label>
+            <input
+              id={`lead-${compact ? "b" : "a"}-${f.k}`}
+              type={f.type}
+              required
+              autoComplete={f.auto}
+              maxLength={120}
+              value={lead[f.k]}
+              onChange={set(f.k)}
+              placeholder={t(`paywall.${f.ph}`) as string}
+              className={`mt-1.5 ${field}`}
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        aria-busy={loading}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-6 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {loading ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
+            {t("paywall.buttonLoading")}
+          </>
+        ) : (
+          <>
+            {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+          </>
+        )}
+      </button>
+      {errorMsg && (
+        <p role="alert" className="text-sm text-destructive">
+          {errorMsg}
+        </p>
+      )}
+      <p className="text-xs text-muted-foreground">{t("paywall.secure")}</p>
+    </form>
+  );
+}
+
 function PreviewSection({
   domain,
   cardKeys,
-  email,
-  setEmail,
+  lead,
+  setLead,
   onStart,
   loading,
   errorMsg,
 }: {
   domain: string;
   cardKeys: readonly (typeof CARD_KEYS)[number][];
-  email: string;
-  setEmail: (v: string) => void;
+  lead: Lead;
+  setLead: (v: Lead) => void;
   onStart: () => void;
   loading: boolean;
   errorMsg: string | null;
 }) {
+
   const { t } = useTranslation();
 
   // Sort by severity to compute priority numbers
