@@ -771,18 +771,19 @@ function PreviewSection({
 
 /* ---------------- PAYWALL ---------------- */
 function Paywall({
-  email,
-  setEmail,
+  lead,
+  setLead,
   onCheckout,
   loading,
   errorMsg,
 }: {
-  email: string;
-  setEmail: (v: string) => void;
+  lead: Lead;
+  setLead: (v: Lead) => void;
   onCheckout: () => void;
   loading: boolean;
   errorMsg: string | null;
 }) {
+
   const { t } = useTranslation();
   const bullets = t("paywall.bullets", { returnObjects: true }) as string[];
   return (
