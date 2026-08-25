@@ -219,7 +219,13 @@ export function Landing() {
         params: { id: payload.scanRequestId },
         search: { lang } as never,
       });
-    } catch {
+    } catch (error) {
+      const limitKind = await getStartDiagnosisLimitKind(error, null);
+      if (limitKind) {
+        setLimitDialog({ kind: limitKind, email: mail, domain });
+        setCheckoutLoading(false);
+        return;
+      }
       setCheckoutError(t("paywall.error"));
       setCheckoutLoading(false);
     }
@@ -341,8 +347,9 @@ async function getStartDiagnosisLimitKind(
 
 function matchLimitKind(value: unknown): LimitDialogKind | null {
   if (typeof value !== "string") return null;
-  if (value.includes("report_limit_reached")) return "report_limit_reached";
-  if (value.includes("daily_budget_reached")) return "daily_budget_reached";
+  const normalized = value.toLowerCase();
+  if (normalized.includes("report_limit_reached")) return "report_limit_reached";
+  if (normalized.includes("daily_budget_reached")) return "daily_budget_reached";
   return null;
 }
 
