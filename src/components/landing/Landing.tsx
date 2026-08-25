@@ -309,6 +309,10 @@ async function getStartDiagnosisLimitKind(
   const direct = matchLimitKind(payloadCode);
   if (direct) return direct;
 
+  const errorMessage = error instanceof Error ? error.message : null;
+  const fromMessage = matchLimitKind(errorMessage);
+  if (fromMessage) return fromMessage;
+
   const context = (error as FunctionErrorWithContext | null)?.context;
   const status = context?.status;
   if (status === 409) return "report_limit_reached";
