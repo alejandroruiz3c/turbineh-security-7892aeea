@@ -702,7 +702,7 @@ function Paywall({
           <div className="grid grid-cols-1 md:grid-cols-[1.2fr,1fr]">
             <div className="p-8 md:p-10">
               <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
-                {t("nav.pricing")}
+                {t("paywall.badge")}
               </div>
               <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
                 {t("paywall.title")}
@@ -722,7 +722,7 @@ function Paywall({
             </div>
             <div className="border-t border-border bg-gradient-to-br from-brand/5 to-brand-2/5 p-8 md:border-l md:border-t-0 md:p-10">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold tracking-tight">€99</span>
+                <span className="text-5xl font-bold tracking-tight text-brand">0 €</span>
                 <span className="text-sm text-muted-foreground">/ {t("hero.reassure.once")}</span>
               </div>
               <div className="mt-6 space-y-3">
@@ -759,6 +759,8 @@ function Paywall({
                   </p>
                 )}
                 <SampleReportButton className="w-full" />
+                <p className="text-xs text-muted-foreground">{t("paywall.secure")}</p>
+
 
 
               </div>
