@@ -192,11 +192,6 @@ export function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <ScrollProgress />
       <Header />
-      {canceledMsg && (
-        <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-800 dark:text-amber-200">
-          {canceledMsg}
-        </div>
-      )}
       <main>
         <Hero
           raw={rawDomain}
@@ -206,12 +201,20 @@ export function Landing() {
         />
         <HowItWorks />
         {normalized && (
-          <PreviewSection domain={normalized} cardKeys={previewCards} onCta={handleCheckout} />
+          <PreviewSection
+            domain={normalized}
+            cardKeys={previewCards}
+            email={email}
+            setEmail={setEmail}
+            onStart={handleFreeStart}
+            loading={checkoutLoading}
+            errorMsg={checkoutError}
+          />
         )}
         <Paywall
           email={email}
           setEmail={setEmail}
-          onCheckout={handleCheckout}
+          onCheckout={handleFreeStart}
           loading={checkoutLoading}
           errorMsg={checkoutError}
         />
@@ -223,6 +226,7 @@ export function Landing() {
         <WhoItsFor />
         <FAQ />
         <LegalDisclaimer />
+        <TurbineHSection />
       </main>
       <Footer />
     </div>
