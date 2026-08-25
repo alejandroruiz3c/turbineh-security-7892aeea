@@ -677,6 +677,48 @@ export const resources = {
         tagline: "AI-powered web exposure diagnosis.",
         rights: "All rights reserved.",
       },
+      turbineh: {
+        eyebrow: "Behind this diagnosis",
+        title: "TurbineH: your company's knowledge, working with you",
+        lead:
+          "TurbineH turns your company's knowledge — the knowledge living in your documents and systems, and also the knowledge that gets spoken and never written down — into operational intelligence that works with you every day.",
+        blocks: [
+          {
+            t: "Ask by text or by voice",
+            d: "Ask whatever you need and get instant answers, with every answer traceable back to its source.",
+          },
+          {
+            t: "Alerts before the problem",
+            d: "You get warned before the problem reaches you, not once it's already urgent.",
+          },
+          {
+            t: "Automate entire processes",
+            d: "Without writing a line of code. One single provider instead of ten subscriptions that don't talk to each other.",
+          },
+          {
+            t: "Your knowledge under your control",
+            d: "Within your own borders, auditable and always yours.",
+          },
+          {
+            t: "Pricing tied to your business",
+            d: "You pay based on what your company invoices, not per user or per query — roll it out to your whole team without the bill moving.",
+          },
+          {
+            t: "In weeks, not months",
+            d: "No setup cost, with the first process included and up and running.",
+          },
+        ],
+        labTitle: "A European lab behind it",
+        labBody:
+          "We research how to produce more efficient artificial intelligence — swarms of small, specialized models instead of giants that burn enormous resources — so every company that joins doesn't just gain speed and quality in its operation: it pushes forward a European, sovereign and auditable alternative to depending on someone else's infrastructure.",
+        closing: "If you grow, we grow with you.",
+        formTitle: "Let's talk for 20 minutes",
+        formBody: "Leave us your email and pick a slot in the calendar.",
+        emailPlaceholder: "you@company.com",
+        emailInvalid: "Please enter a valid email.",
+        cta: "Book a call",
+        success: "Great! We've opened the calendar in another tab.",
+      },
       verify: {
         loading: "Loading your diagnosis…",
         confirmingPayment: "Preparing your diagnosis… this can take a few seconds.",
