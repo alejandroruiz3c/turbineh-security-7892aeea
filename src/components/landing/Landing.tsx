@@ -133,7 +133,14 @@ export function Landing() {
       scrollToId("domain-input");
       return;
     }
-    const mail = email.trim();
+    const name = lead.name.trim();
+    const phone = lead.phone.trim();
+    const company = lead.company.trim();
+    const mail = lead.email.trim();
+    if (!name) {
+      setCheckoutError(t("paywall.nameRequired"));
+      return;
+    }
     if (!mail) {
       setCheckoutError(t("paywall.emailRequired"));
       return;
@@ -142,12 +149,24 @@ export function Landing() {
       setCheckoutError(t("paywall.emailInvalid"));
       return;
     }
+    if (!phone) {
+      setCheckoutError(t("paywall.phoneRequired"));
+      return;
+    }
+    if (!/^[+()\d\s.-]{6,20}$/.test(phone)) {
+      setCheckoutError(t("paywall.phoneInvalid"));
+      return;
+    }
+    if (!company) {
+      setCheckoutError(t("paywall.companyRequired"));
+      return;
+    }
     setCheckoutError(null);
     setCheckoutLoading(true);
     trackEvent("unlock_clicked", { lang, meta: { domain } });
     try {
       const { data, error } = await supabase.functions.invoke("start-free-diagnosis", {
-        body: { domain, email: mail, lang },
+        body: { domain, email: mail, name, phone, company, lang },
       });
       const payload = data as { scanRequestId?: string; error?: string } | null;
       if (error || !payload?.scanRequestId) {
@@ -165,6 +184,7 @@ export function Landing() {
       setCheckoutLoading(false);
     }
   };
+
 
   // Reveal-on-scroll for elements with `.reveal`
   useEffect(() => {
