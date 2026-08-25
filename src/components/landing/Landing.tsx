@@ -225,16 +225,17 @@ export function Landing() {
           <PreviewSection
             domain={normalized}
             cardKeys={previewCards}
-            email={email}
-            setEmail={setEmail}
+            lead={lead}
+            setLead={setLead}
             onStart={handleFreeStart}
             loading={checkoutLoading}
             errorMsg={checkoutError}
           />
         )}
         <Paywall
-          email={email}
-          setEmail={setEmail}
+          lead={lead}
+          setLead={setLead}
+
           onCheckout={handleFreeStart}
           loading={checkoutLoading}
           errorMsg={checkoutError}
