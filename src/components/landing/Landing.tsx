@@ -1104,7 +1104,7 @@ function Footer() {
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
           <a href="/legal/terms" className="hover:text-foreground">{t("legal.terms")}</a>
           <a href="/legal/privacy" className="hover:text-foreground">{t("legal.privacy")}</a>
-          <a href="/legal/refunds" className="hover:text-foreground">{t("legal.refunds")}</a>
+          
           <a href="mailto:hello@turbineh.com" className="hover:text-foreground">
             {t("legal.contact")}
           </a>
