@@ -5,23 +5,23 @@ export const resources = {
       meta: {
         title: "Diagnóstico de Exposición Web — TurbineH Security",
         description:
-          "Descubre qué expone tu web y cierra los riesgos con IA. Diagnóstico claro, pago único de 99 €.",
+          "Descubre gratis qué expone tu web y cómo arreglarlo. La IA por fin permite democratizar la ciberseguridad para cualquier negocio online.",
       },
       nav: {
         how: "Cómo funciona",
         what: "Qué revisamos",
-        pricing: "Precio",
+        pricing: "Diagnóstico gratis",
         faq: "FAQ",
-        cta: "Analizar mi web",
+        cta: "Diagnóstico gratis",
       },
       hero: {
-        title: "Evita el secuestro de tu negocio pagando 100 veces menos.",
+        title: "Descubre gratis qué expone tu web y cómo arreglarlo.",
         subtitle:
-          "1 de cada 3 negocios online sufren suplantación de marca, caídas a propósito o filtraciones. Esto puede costarte miles al día. Con IA puedes identificar y resolver riesgos tú mismo.",
+          "La IA por fin permite democratizar la ciberseguridad para cualquier negocio online. Lo ponemos a disposición de todos de forma gratuita: sin coste, sin trampas, nuestra contribución a la seguridad de los negocios online.",
         trust: "",
         reassure: {
           minutes: "Análisis en minutos",
-          once: "Plan de acción claro",
+          once: "100% gratis, sin trampas",
           notech: "Sin conocimientos técnicos necesarios",
         },
       },
@@ -54,10 +54,10 @@ export const resources = {
         status: "Pendiente de verificar en tu diagnóstico completo",
         severity: { critical: "Crítico", high: "Alto", medium: "Medio", low: "Bajo" },
         disclaimer:
-          "Preview gratuito basado en vulnerabilidades potenciales y riesgos comunes que revisaremos en tu dominio. Para ejecutar el análisis completo y ver tus hallazgos concretos, desbloquea el diagnóstico.",
+          "Preview gratuito basado en vulnerabilidades potenciales y riesgos comunes que revisaremos en tu dominio. Ejecuta el diagnóstico completo, también gratis, para ver tus hallazgos concretos.",
         tag: "Se revisará en tu diagnóstico",
         closing:
-          "Estos son riesgos habituales en dominios como el tuyo. En el diagnóstico completo analizamos tu web real, ampliamos los hallazgos y los convertimos en un plan de acción priorizado para que puedas resolverlos paso a paso, incluso con un asistente de IA como Claude, Fable u otra herramienta equivalente.",
+          "Estos son riesgos habituales en dominios como el tuyo. En el diagnóstico completo —gratis— analizamos tu web real, ampliamos los hallazgos y los convertimos en un plan de acción priorizado para que puedas resolverlos paso a paso, incluso con un asistente de IA como Claude, Fable u otra herramienta equivalente.",
         cards: {
           headers: {
             t: "Headers de seguridad ausentes o incompletos",
@@ -98,9 +98,10 @@ export const resources = {
         },
       },
       paywall: {
-        title: "Desbloquea tu diagnóstico completo — 99 €",
+        badge: "Gratis",
+        title: "Tu diagnóstico completo, gratis",
         value:
-          "Pago único. Sin suscripciones, sin consultores. Menos de lo que cuesta una hora de un experto en seguridad.",
+          "Sin coste, sin suscripciones, sin tarjeta. Es nuestra contribución a la ciberseguridad de los negocios online.",
         includes: "Incluye",
         bullets: [
           "Análisis real de tu dominio",
@@ -114,13 +115,13 @@ export const resources = {
         ],
         emailLabel: "Tu email para recibir el informe",
         emailPlaceholder: "tu@empresa.com",
-        button: "Ejecutar análisis y plan de acción completo",
+        button: "Ejecutar diagnóstico gratis",
         buttonLoading: "Procesando…",
         error: "No hemos podido iniciar tu diagnóstico. Inténtalo de nuevo en unos segundos.",
         emailRequired: "Introduce tu email para continuar.",
         emailInvalid: "Introduce un email válido.",
-        canceled: "Pago cancelado. Puedes intentarlo cuando quieras.",
-        secure: "Pago seguro. Sin suscripción.",
+        domainRequired: "Introduce tu dominio arriba para continuar.",
+        secure: "Gratis siempre. Sin tarjeta, sin suscripción.",
       },
       sample: {
         button: "Descarga reporte ejemplo GRATIS",
@@ -165,7 +166,7 @@ export const resources = {
           "Automatizado y externo",
           "Señales públicas de configuración",
           "Informativo y defensivo",
-          "Listo en minutos, 99 €",
+          "Listo en minutos, gratis",
         ],
         col2t: "Pentest completo",
         col2: [
@@ -196,7 +197,11 @@ export const resources = {
           },
           {
             q: "¿Analizáis mi dominio de verdad?",
-            a: "Sí. Tras el pago ejecutamos el análisis real sobre tu dominio y generamos un informe con hallazgos concretos.",
+            a: "Sí. Tras verificar el dominio ejecutamos el análisis real y generamos un informe con hallazgos concretos.",
+          },
+          {
+            q: "¿De verdad es gratis?",
+            a: "Sí. El diagnóstico completo y el informe en PDF son gratuitos, sin tarjeta ni suscripción. Es nuestra contribución a la seguridad de los negocios online.",
           },
           {
             q: "¿Puedo arreglarlo yo mismo?",
