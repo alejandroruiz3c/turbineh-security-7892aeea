@@ -21,6 +21,7 @@
 import { computeScore, type ScoredFinding, type Severity } from "./score.ts";
 import { ensureReportPdf } from "./pdfStore.ts";
 import { sendReportEmail } from "./reportEmail.ts";
+import { alertDeliveryFailure } from "./deliveryAlert.ts";
 import {
   releaseAiBudget,
   releaseFreeReportClaim,
@@ -490,19 +491,65 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
   // --- Post-report chain: build the PDF, then email the buyer (best-effort) ---
   // Both are non-fatal: the report is already saved and status is 'completed'.
   // Both remain independently callable via generate-pdf / send-report-email.
+  // A failure here does NOT fail the scan — the report exists and is readable on
+  // the site — but it DOES mean the customer is waiting for an email that never
+  // arrives, so we alert ourselves instead of only logging.
   try {
     const pdf = await ensureReportPdf(supabase, scan.id, { force: false });
-    if (!pdf.ok) console.error("generateReport: PDF step did not complete", pdf.body);
+    if (!pdf.ok) {
+      console.error("generateReport: PDF step did not complete", pdf.body);
+      await alertDeliveryFailure({
+        stage: "pdf",
+        scanRequestId: scan.id,
+        domain,
+        customerEmail: scan.email ?? null,
+        reason: JSON.stringify(pdf.body).slice(0, 300),
+      });
+    }
   } catch (e) {
     console.error("generateReport: PDF step threw", e);
+    await alertDeliveryFailure({
+      stage: "pdf",
+      scanRequestId: scan.id,
+      domain,
+      customerEmail: scan.email ?? null,
+      reason: String((e as Error)?.message ?? e).slice(0, 300),
+    });
   }
   if (scan.email) {
     try {
       const mail = await sendReportEmail(supabase, scan.id);
-      if (!mail.ok) console.error("generateReport: email step did not complete", mail.body);
+      if (!mail.ok) {
+        console.error("generateReport: email step did not complete", mail.body);
+        await alertDeliveryFailure({
+          stage: "email",
+          scanRequestId: scan.id,
+          domain,
+          customerEmail: scan.email,
+          reason: JSON.stringify(mail.body).slice(0, 300),
+        });
+      }
     } catch (e) {
       console.error("generateReport: email step threw", e);
+      await alertDeliveryFailure({
+        stage: "email",
+        scanRequestId: scan.id,
+        domain,
+        customerEmail: scan.email,
+        reason: String((e as Error)?.message ?? e).slice(0, 300),
+      });
     }
+  } else {
+    // Should be impossible in the free flow (the form requires an email), so if
+    // it happens we want to know rather than silently deliver nothing.
+    console.error("generateReport: no email on scan; report not delivered", scan.id);
+    await alertDeliveryFailure({
+      stage: "email",
+      scanRequestId: scan.id,
+      domain,
+      customerEmail: null,
+      reason: "scan has no email on file",
+    });
   }
 
   return {
