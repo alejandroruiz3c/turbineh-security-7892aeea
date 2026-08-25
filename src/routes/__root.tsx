@@ -162,7 +162,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
                 "Análisis externo automatizado con IA de la exposición pública de un dominio, con plan de acción priorizado.",
               offers: {
                 "@type": "Offer",
-                price: "99",
+                price: "0",
                 priceCurrency: "EUR",
                 availability: "https://schema.org/InStock",
               },

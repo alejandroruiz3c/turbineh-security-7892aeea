@@ -1,7 +1,7 @@
 import logoAsset from "@/assets/turbineh-mark.png.asset.json";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-// navigate no longer needed: checkout redirects to Stripe URL
+import { useNavigate } from "@tanstack/react-router";
 import { LangToggle } from "@/components/LangToggle";
 import { normalizeDomain, validateDomain } from "@/lib/domain";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +57,7 @@ function scrollToId(id: string) {
 export function Landing() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
-  // navigate not needed here anymore
+  const navigate = useNavigate();
 
   const [rawDomain, setRawDomain] = useState("");
   const [normalized, setNormalized] = useState<string | null>(null);
@@ -65,7 +65,6 @@ export function Landing() {
   const [email, setEmail] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [canceledMsg, setCanceledMsg] = useState<string | null>(null);
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
@@ -112,30 +111,9 @@ export function Landing() {
     setTimeout(() => scrollToId("preview"), 60);
   };
 
-  // Fire landing_view once on mount + handle Stripe cancel return
+  // Fire landing_view once on mount
   useEffect(() => {
     trackEvent("landing_view", { lang });
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("canceled") === "1") {
-        setCanceledMsg(t("paywall.canceled"));
-        const sid = params.get("sid");
-        if (sid) {
-          try {
-            void supabase.functions
-              .invoke("trigger-retry", { body: { scanRequestId: sid } })
-              .catch(() => {});
-          } catch {
-            /* ignore */
-          }
-        }
-        // Clean the URL so the banner doesn't persist on reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete("canceled");
-        url.searchParams.delete("sid");
-        window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
-      }
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -147,15 +125,43 @@ export function Landing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalized]);
 
-  const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/6oU14ofxUfqR4cfdLe2oE03";
-
-  const handleCheckout = () => {
-    trackEvent("unlock_clicked", {
-      lang,
-      meta: { domain: normalized ?? undefined },
-    });
-    if (typeof window !== "undefined") {
-      window.open(STRIPE_CHECKOUT_URL, "_blank", "noopener,noreferrer");
+  const handleFreeStart = async () => {
+    const domain = normalized ?? normalizeDomain(rawDomain);
+    if (!domain || validateDomain(domain)) {
+      setCheckoutError(t("paywall.domainRequired"));
+      scrollToId("domain-input");
+      return;
+    }
+    const mail = email.trim();
+    if (!mail) {
+      setCheckoutError(t("paywall.emailRequired"));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      setCheckoutError(t("paywall.emailInvalid"));
+      return;
+    }
+    setCheckoutError(null);
+    setCheckoutLoading(true);
+    trackEvent("unlock_clicked", { lang, meta: { domain } });
+    try {
+      const { data, error } = await supabase.functions.invoke("start-free-diagnosis", {
+        body: { domain, email: mail, lang },
+      });
+      const payload = data as { scanRequestId?: string; error?: string } | null;
+      if (error || !payload?.scanRequestId) {
+        setCheckoutError(t("paywall.error"));
+        setCheckoutLoading(false);
+        return;
+      }
+      navigate({
+        to: "/verify/$id",
+        params: { id: payload.scanRequestId },
+        search: { lang } as never,
+      });
+    } catch {
+      setCheckoutError(t("paywall.error"));
+      setCheckoutLoading(false);
     }
   };
 
@@ -186,11 +192,6 @@ export function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <ScrollProgress />
       <Header />
-      {canceledMsg && (
-        <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-800 dark:text-amber-200">
-          {canceledMsg}
-        </div>
-      )}
       <main>
         <Hero
           raw={rawDomain}
@@ -200,12 +201,20 @@ export function Landing() {
         />
         <HowItWorks />
         {normalized && (
-          <PreviewSection domain={normalized} cardKeys={previewCards} onCta={handleCheckout} />
+          <PreviewSection
+            domain={normalized}
+            cardKeys={previewCards}
+            email={email}
+            setEmail={setEmail}
+            onStart={handleFreeStart}
+            loading={checkoutLoading}
+            errorMsg={checkoutError}
+          />
         )}
         <Paywall
           email={email}
           setEmail={setEmail}
-          onCheckout={handleCheckout}
+          onCheckout={handleFreeStart}
           loading={checkoutLoading}
           errorMsg={checkoutError}
         />
@@ -217,6 +226,7 @@ export function Landing() {
         <WhoItsFor />
         <FAQ />
         <LegalDisclaimer />
+        <TurbineHSection />
       </main>
       <Footer />
     </div>
@@ -465,11 +475,19 @@ const SEV_STYLES: Record<
 function PreviewSection({
   domain,
   cardKeys,
-  onCta,
+  email,
+  setEmail,
+  onStart,
+  loading,
+  errorMsg,
 }: {
   domain: string;
   cardKeys: readonly (typeof CARD_KEYS)[number][];
-  onCta: () => void;
+  email: string;
+  setEmail: (v: string) => void;
+  onStart: () => void;
+  loading: boolean;
+  errorMsg: string | null;
 }) {
   const { t } = useTranslation();
 
@@ -619,13 +637,42 @@ function PreviewSection({
         <p className="mx-auto mt-10 max-w-3xl text-center text-sm text-muted-foreground">
           {t("preview.closing")}
         </p>
-        <div className="mt-8 text-center">
-          <button
-            onClick={onCta}
-            className="inline-flex items-center gap-2 rounded-xl bg-cta px-6 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition"
-          >
-            {t("paywall.button")} <ArrowRight className="h-4 w-4" />
-          </button>
+        <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("paywall.emailLabel")}
+          </label>
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("paywall.emailPlaceholder") as string}
+              className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
+            />
+            <button
+              onClick={onStart}
+              disabled={loading}
+              aria-busy={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-cta px-6 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {loading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
+                  {t("paywall.buttonLoading")}
+                </>
+              ) : (
+                <>
+                  {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </div>
+          {errorMsg && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {errorMsg}
+            </p>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">{t("paywall.secure")}</p>
         </div>
       </div>
     </section>
@@ -655,7 +702,7 @@ function Paywall({
           <div className="grid grid-cols-1 md:grid-cols-[1.2fr,1fr]">
             <div className="p-8 md:p-10">
               <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
-                {t("nav.pricing")}
+                {t("paywall.badge")}
               </div>
               <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
                 {t("paywall.title")}
@@ -675,7 +722,7 @@ function Paywall({
             </div>
             <div className="border-t border-border bg-gradient-to-br from-brand/5 to-brand-2/5 p-8 md:border-l md:border-t-0 md:p-10">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold tracking-tight">€99</span>
+                <span className="text-5xl font-bold tracking-tight text-brand">0 €</span>
                 <span className="text-sm text-muted-foreground">/ {t("hero.reassure.once")}</span>
               </div>
               <div className="mt-6 space-y-3">
@@ -712,6 +759,8 @@ function Paywall({
                   </p>
                 )}
                 <SampleReportButton className="w-full" />
+                <p className="text-xs text-muted-foreground">{t("paywall.secure")}</p>
+
 
 
               </div>
@@ -928,6 +977,112 @@ function LegalDisclaimer() {
   );
 }
 
+/* ---------------- TURBINEH COMPANY ---------------- */
+const CALENDLY_URL = "https://calendly.com/alejandroruiz3c/turbineh-alex-ruiz";
+
+function TurbineHSection() {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("en") ? "en" : "es";
+  const blocks = t("turbineh.blocks", { returnObjects: true }) as { t: string; d: string }[];
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const handleBook = () => {
+    const mail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      setError(t("turbineh.emailInvalid"));
+      return;
+    }
+    setError(null);
+    // Open synchronously to avoid popup blockers
+    if (typeof window !== "undefined") {
+      window.open(CALENDLY_URL, "_blank", "noopener");
+    }
+    try {
+      void supabase.functions
+        .invoke("notify-lead", { body: { type: "turbineh_lead", email: mail, lang } })
+        .catch(() => {});
+    } catch {
+      /* ignore */
+    }
+    setDone(true);
+  };
+
+  return (
+    <section className="relative overflow-hidden bg-[var(--brand-navy)] text-white">
+      <div className="pointer-events-none absolute inset-0 cyber-grid opacity-30" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-[var(--brand-green)]/10 blur-3xl" />
+      <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--brand-green-lime)]">
+            <img src={logoAsset.url} alt="" width={16} height={16} className="h-4 w-4" />
+            {t("turbineh.eyebrow")}
+          </div>
+          <h2 className="mt-5 text-3xl font-bold tracking-tight md:text-4xl">
+            {t("turbineh.title")}
+          </h2>
+          <p className="mt-5 text-base leading-relaxed text-[var(--text-muted)] md:text-lg">
+            {t("turbineh.lead")}
+          </p>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {blocks.map((b) => (
+            <div
+              key={b.t}
+              className="reveal rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-[var(--brand-green)]/40"
+            >
+              <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand-green)]/15 text-[var(--brand-green-lime)]">
+                <Check className="h-4 w-4" strokeWidth={3} />
+              </div>
+              <h3 className="text-base font-semibold">{b.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{b.d}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 grid gap-6 rounded-3xl border border-white/10 bg-white/[0.03] p-8 md:grid-cols-[1.3fr_1fr] md:p-10">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-green-lime)]">
+              <Sparkles className="h-3.5 w-3.5" /> {t("turbineh.labTitle")}
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)]">
+              {t("turbineh.labBody")}
+            </p>
+            <p className="mt-5 text-lg font-semibold text-white">{t("turbineh.closing")}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-[var(--brand-navy-2)] p-6">
+            <h3 className="text-lg font-semibold">{t("turbineh.formTitle")}</h3>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">{t("turbineh.formBody")}</p>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("turbineh.emailPlaceholder") as string}
+              className="mt-4 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-[var(--brand-green)]"
+            />
+            <button
+              onClick={handleBook}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-green)] px-5 py-3.5 text-sm font-semibold text-[var(--brand-navy)] transition hover:brightness-110"
+            >
+              {t("turbineh.cta")} <ArrowRight className="h-4 w-4" />
+            </button>
+            {error && (
+              <p role="alert" className="mt-2 text-sm text-red-300">
+                {error}
+              </p>
+            )}
+            {done && !error && (
+              <p className="mt-2 text-sm text-[var(--brand-green-lime)]">{t("turbineh.success")}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------------- FOOTER ---------------- */
 function Footer() {
   const { t } = useTranslation();
@@ -949,7 +1104,7 @@ function Footer() {
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
           <a href="/legal/terms" className="hover:text-foreground">{t("legal.terms")}</a>
           <a href="/legal/privacy" className="hover:text-foreground">{t("legal.privacy")}</a>
-          <a href="/legal/refunds" className="hover:text-foreground">{t("legal.refunds")}</a>
+          
           <a href="mailto:hello@turbineh.com" className="hover:text-foreground">
             {t("legal.contact")}
           </a>

@@ -9,26 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SuccessRouteImport } from './routes/success'
-import { Route as CancelRouteImport } from './routes/cancel'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 import { Route as ReportIdRouteImport } from './routes/report.$id'
 import { Route as ProcessingIdRouteImport } from './routes/processing.$id'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
-import { Route as LegalRefundsRouteImport } from './routes/legal.refunds'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 
-const SuccessRoute = SuccessRouteImport.update({
-  id: '/success',
-  path: '/success',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CancelRoute = CancelRouteImport.update({
-  id: '/cancel',
-  path: '/cancel',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -54,11 +41,6 @@ const LegalTermsRoute = LegalTermsRouteImport.update({
   path: '/legal/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LegalRefundsRoute = LegalRefundsRouteImport.update({
-  id: '/legal/refunds',
-  path: '/legal/refunds',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
   id: '/legal/privacy',
   path: '/legal/privacy',
@@ -67,10 +49,7 @@ const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/cancel': typeof CancelRoute
-  '/success': typeof SuccessRoute
   '/legal/privacy': typeof LegalPrivacyRoute
-  '/legal/refunds': typeof LegalRefundsRoute
   '/legal/terms': typeof LegalTermsRoute
   '/processing/$id': typeof ProcessingIdRoute
   '/report/$id': typeof ReportIdRoute
@@ -78,10 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/cancel': typeof CancelRoute
-  '/success': typeof SuccessRoute
   '/legal/privacy': typeof LegalPrivacyRoute
-  '/legal/refunds': typeof LegalRefundsRoute
   '/legal/terms': typeof LegalTermsRoute
   '/processing/$id': typeof ProcessingIdRoute
   '/report/$id': typeof ReportIdRoute
@@ -90,10 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/cancel': typeof CancelRoute
-  '/success': typeof SuccessRoute
   '/legal/privacy': typeof LegalPrivacyRoute
-  '/legal/refunds': typeof LegalRefundsRoute
   '/legal/terms': typeof LegalTermsRoute
   '/processing/$id': typeof ProcessingIdRoute
   '/report/$id': typeof ReportIdRoute
@@ -103,10 +76,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/cancel'
-    | '/success'
     | '/legal/privacy'
-    | '/legal/refunds'
     | '/legal/terms'
     | '/processing/$id'
     | '/report/$id'
@@ -114,10 +84,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/cancel'
-    | '/success'
     | '/legal/privacy'
-    | '/legal/refunds'
     | '/legal/terms'
     | '/processing/$id'
     | '/report/$id'
@@ -125,10 +92,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/cancel'
-    | '/success'
     | '/legal/privacy'
-    | '/legal/refunds'
     | '/legal/terms'
     | '/processing/$id'
     | '/report/$id'
@@ -137,10 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CancelRoute: typeof CancelRoute
-  SuccessRoute: typeof SuccessRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
-  LegalRefundsRoute: typeof LegalRefundsRoute
   LegalTermsRoute: typeof LegalTermsRoute
   ProcessingIdRoute: typeof ProcessingIdRoute
   ReportIdRoute: typeof ReportIdRoute
@@ -149,20 +110,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/success': {
-      id: '/success'
-      path: '/success'
-      fullPath: '/success'
-      preLoaderRoute: typeof SuccessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cancel': {
-      id: '/cancel'
-      path: '/cancel'
-      fullPath: '/cancel'
-      preLoaderRoute: typeof CancelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -198,13 +145,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/legal/refunds': {
-      id: '/legal/refunds'
-      path: '/legal/refunds'
-      fullPath: '/legal/refunds'
-      preLoaderRoute: typeof LegalRefundsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/legal/privacy': {
       id: '/legal/privacy'
       path: '/legal/privacy'
@@ -217,10 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CancelRoute: CancelRoute,
-  SuccessRoute: SuccessRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
-  LegalRefundsRoute: LegalRefundsRoute,
   LegalTermsRoute: LegalTermsRoute,
   ProcessingIdRoute: ProcessingIdRoute,
   ReportIdRoute: ReportIdRoute,
@@ -229,3 +166,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

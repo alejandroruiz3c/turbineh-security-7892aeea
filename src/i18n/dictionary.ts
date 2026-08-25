@@ -5,23 +5,23 @@ export const resources = {
       meta: {
         title: "Diagnóstico de Exposición Web — TurbineH Security",
         description:
-          "Descubre qué expone tu web y cierra los riesgos con IA. Diagnóstico claro, pago único de 99 €.",
+          "Descubre gratis qué expone tu web y cómo arreglarlo. La IA por fin permite democratizar la ciberseguridad para cualquier negocio online.",
       },
       nav: {
         how: "Cómo funciona",
         what: "Qué revisamos",
-        pricing: "Precio",
+        pricing: "Diagnóstico gratis",
         faq: "FAQ",
-        cta: "Analizar mi web",
+        cta: "Diagnóstico gratis",
       },
       hero: {
-        title: "Evita el secuestro de tu negocio pagando 100 veces menos.",
+        title: "Descubre gratis qué expone tu web y cómo arreglarlo.",
         subtitle:
-          "1 de cada 3 negocios online sufren suplantación de marca, caídas a propósito o filtraciones. Esto puede costarte miles al día. Con IA puedes identificar y resolver riesgos tú mismo.",
+          "La IA por fin permite democratizar la ciberseguridad para cualquier negocio online. Lo ponemos a disposición de todos de forma gratuita: sin coste, sin trampas, nuestra contribución a la seguridad de los negocios online.",
         trust: "",
         reassure: {
           minutes: "Análisis en minutos",
-          once: "Plan de acción claro",
+          once: "100% gratis, sin trampas",
           notech: "Sin conocimientos técnicos necesarios",
         },
       },
@@ -54,10 +54,10 @@ export const resources = {
         status: "Pendiente de verificar en tu diagnóstico completo",
         severity: { critical: "Crítico", high: "Alto", medium: "Medio", low: "Bajo" },
         disclaimer:
-          "Preview gratuito basado en vulnerabilidades potenciales y riesgos comunes que revisaremos en tu dominio. Para ejecutar el análisis completo y ver tus hallazgos concretos, desbloquea el diagnóstico.",
+          "Preview gratuito basado en vulnerabilidades potenciales y riesgos comunes que revisaremos en tu dominio. Ejecuta el diagnóstico completo, también gratis, para ver tus hallazgos concretos.",
         tag: "Se revisará en tu diagnóstico",
         closing:
-          "Estos son riesgos habituales en dominios como el tuyo. En el diagnóstico completo analizamos tu web real, ampliamos los hallazgos y los convertimos en un plan de acción priorizado para que puedas resolverlos paso a paso, incluso con un asistente de IA como Claude, Fable u otra herramienta equivalente.",
+          "Estos son riesgos habituales en dominios como el tuyo. En el diagnóstico completo —gratis— analizamos tu web real, ampliamos los hallazgos y los convertimos en un plan de acción priorizado para que puedas resolverlos paso a paso, incluso con un asistente de IA como Claude, Fable u otra herramienta equivalente.",
         cards: {
           headers: {
             t: "Headers de seguridad ausentes o incompletos",
@@ -98,9 +98,10 @@ export const resources = {
         },
       },
       paywall: {
-        title: "Desbloquea tu diagnóstico completo — 99 €",
+        badge: "Gratis",
+        title: "Tu diagnóstico completo, gratis",
         value:
-          "Pago único. Sin suscripciones, sin consultores. Menos de lo que cuesta una hora de un experto en seguridad.",
+          "Sin coste, sin suscripciones, sin tarjeta. Es nuestra contribución a la ciberseguridad de los negocios online.",
         includes: "Incluye",
         bullets: [
           "Análisis real de tu dominio",
@@ -114,13 +115,13 @@ export const resources = {
         ],
         emailLabel: "Tu email para recibir el informe",
         emailPlaceholder: "tu@empresa.com",
-        button: "Ejecutar análisis y plan de acción completo",
+        button: "Ejecutar diagnóstico gratis",
         buttonLoading: "Procesando…",
         error: "No hemos podido iniciar tu diagnóstico. Inténtalo de nuevo en unos segundos.",
         emailRequired: "Introduce tu email para continuar.",
         emailInvalid: "Introduce un email válido.",
-        canceled: "Pago cancelado. Puedes intentarlo cuando quieras.",
-        secure: "Pago seguro. Sin suscripción.",
+        domainRequired: "Introduce tu dominio arriba para continuar.",
+        secure: "Gratis siempre. Sin tarjeta, sin suscripción.",
       },
       sample: {
         button: "Descarga reporte ejemplo GRATIS",
@@ -165,7 +166,7 @@ export const resources = {
           "Automatizado y externo",
           "Señales públicas de configuración",
           "Informativo y defensivo",
-          "Listo en minutos, 99 €",
+          "Listo en minutos, gratis",
         ],
         col2t: "Pentest completo",
         col2: [
@@ -196,7 +197,11 @@ export const resources = {
           },
           {
             q: "¿Analizáis mi dominio de verdad?",
-            a: "Sí. Tras el pago ejecutamos el análisis real sobre tu dominio y generamos un informe con hallazgos concretos.",
+            a: "Sí. Tras verificar el dominio ejecutamos el análisis real y generamos un informe con hallazgos concretos.",
+          },
+          {
+            q: "¿De verdad es gratis?",
+            a: "Sí. El diagnóstico completo y el informe en PDF son gratuitos, sin tarjeta ni suscripción. Es nuestra contribución a la seguridad de los negocios online.",
           },
           {
             q: "¿Puedo arreglarlo yo mismo?",
@@ -236,18 +241,60 @@ export const resources = {
         tagline: "Diagnóstico de exposición web con IA.",
         rights: "Todos los derechos reservados.",
       },
+      turbineh: {
+        eyebrow: "Detrás de este diagnóstico",
+        title: "TurbineH: el conocimiento de tu empresa, trabajando contigo",
+        lead:
+          "TurbineH convierte el conocimiento de tu empresa —el que vive en tus documentos y tus sistemas, y también el que se habla y nunca queda escrito— en inteligencia operativa que trabaja contigo cada día.",
+        blocks: [
+          {
+            t: "Pregunta por texto o por voz",
+            d: "Consulta lo que necesites y recibe respuestas al momento, con cada respuesta trazable hasta su origen.",
+          },
+          {
+            t: "Alertas antes del problema",
+            d: "Te avisa antes de que el problema te llegue, no cuando ya es urgente.",
+          },
+          {
+            t: "Automatiza procesos completos",
+            d: "Sin escribir una línea de código. Un solo proveedor en lugar de diez suscripciones que no se hablan entre sí.",
+          },
+          {
+            t: "Tu conocimiento bajo tu control",
+            d: "Dentro de tus fronteras, auditable y siempre tuyo.",
+          },
+          {
+            t: "Precio ligado a tu negocio",
+            d: "Pagas según lo que factura tu empresa, no por usuario ni por consulta: despliégalo con todo tu equipo sin que la factura se mueva.",
+          },
+          {
+            t: "En semanas, no en meses",
+            d: "Sin coste de puesta en marcha y con el primer proceso incluido y funcionando.",
+          },
+        ],
+        labTitle: "Un laboratorio europeo detrás",
+        labBody:
+          "Investigamos cómo producir inteligencia artificial más eficiente —enjambres de modelos pequeños y especializados en lugar de gigantes que consumen una barbaridad—, de forma que cada empresa que entra no solo gana velocidad y calidad en su operación: empuja una alternativa europea, soberana y auditable frente a depender de infraestructura ajena.",
+        closing: "Si tú creces, crecemos contigo.",
+        formTitle: "Hablemos 20 minutos",
+        formBody: "Déjanos tu email y elige un hueco en la agenda.",
+        emailPlaceholder: "tu@empresa.com",
+        emailInvalid: "Introduce un email válido.",
+        cta: "Reservar una llamada",
+        success: "¡Perfecto! Te hemos abierto la agenda en otra pestaña.",
+      },
       verify: {
         loading: "Cargando tu diagnóstico…",
-        confirmingPayment: "Confirmando tu pago… esto puede tardar unos segundos.",
+        confirmingPayment: "Preparando tu diagnóstico… esto puede tardar unos segundos.",
         notFoundTitle: "No hemos podido cargar este diagnóstico",
         notFoundBody: "El enlace puede haber expirado o no ser válido. Vuelve al inicio e inténtalo de nuevo.",
         backHome: "Volver al inicio",
         successTitle: "Dominio verificado",
-        successBody: "Dominio verificado correctamente. Ya puedes ejecutar el diagnóstico real. Una vez emitido el informe, este diagnóstico se considerará completado y no podrá ejecutarse de nuevo con el mismo pago.",
+        successBody: "Dominio verificado correctamente. Ya puedes ejecutar el diagnóstico real, sin coste. Una vez emitido el informe, este diagnóstico se considerará completado.",
         runCta: "Ejecutar diagnóstico completo",
         runCtaStubNote: "La ejecución real se conectará en la siguiente fase.",
         title: "Verifica tu dominio",
-        intro: "Tu pago se ha confirmado. Para ejecutar el análisis necesitamos confirmar que tienes autorización sobre {{domain}}. Te enviaremos un código a un correo de tu propio dominio.",
+        intro: "Ya casi está. Para ejecutar el análisis necesitamos confirmar que tienes autorización sobre {{domain}}. Te enviaremos un código a un correo de tu propio dominio.",
         domainLabel: "Dominio a verificar",
         domainLocked: "El dominio no se puede cambiar tras el pago. Si te has equivocado, contáctanos.",
         step1Title: "Paso 1 · Elige un correo de tu dominio",
@@ -394,23 +441,23 @@ export const resources = {
       meta: {
         title: "Web Exposure Diagnosis — TurbineH Security",
         description:
-          "Find out what your website exposes and close the risks with AI. Clear diagnosis, one-time €99.",
+          "Discover for free what your website exposes and how to fix it. AI finally makes cybersecurity accessible to every online business.",
       },
       nav: {
         how: "How it works",
         what: "What we check",
-        pricing: "Pricing",
+        pricing: "Free diagnosis",
         faq: "FAQ",
-        cta: "Analyze my site",
+        cta: "Free diagnosis",
       },
       hero: {
-        title: "Avoid your business being hijacked — for 100× less.",
+        title: "Discover for free what your website exposes and how to fix it.",
         subtitle:
-          "1 in 3 online businesses suffer brand impersonation, deliberate downtime or data leaks. This can cost you thousands a day. With AI you can identify and fix the risks yourself.",
+          "AI finally makes cybersecurity accessible to every online business. We're making it available to everyone at no cost: no fees, no catch — our contribution to the security of online businesses.",
         trust: "",
         reassure: {
           minutes: "Analysis in minutes",
-          once: "Clear action plan",
+          once: "100% free, no catch",
           notech: "No tech skills required",
         },
       },
@@ -443,10 +490,10 @@ export const resources = {
         status: "Pending verification in your full diagnosis",
         severity: { critical: "Critical", high: "High", medium: "Medium", low: "Low" },
         disclaimer:
-          "Free preview based on potential vulnerabilities and common risks we'll check on your domain. To run the full analysis and see your concrete findings, unlock the diagnosis.",
+          "Free preview based on potential vulnerabilities and common risks we'll check on your domain. Run the full diagnosis — also free — to see your concrete findings.",
         tag: "Checked in your diagnosis",
         closing:
-          "These are common risks for domains like yours. In the full diagnosis we analyze your real website, expand the findings and turn them into a prioritized action plan so you can fix them step by step, even with an AI assistant like Claude, Fable or an equivalent tool.",
+          "These are common risks for domains like yours. In the full diagnosis — free — we analyze your real website, expand the findings and turn them into a prioritized action plan so you can fix them step by step, even with an AI assistant like Claude, Fable or an equivalent tool.",
         cards: {
           headers: {
             t: "Missing or incomplete security headers",
@@ -487,9 +534,10 @@ export const resources = {
         },
       },
       paywall: {
-        title: "Unlock your full diagnosis — €99",
+        badge: "Free",
+        title: "Your full diagnosis, free",
         value:
-          "One-time payment. No subscriptions, no consultants. Less than one hour of a security expert.",
+          "No cost, no subscriptions, no card. It's our contribution to the cybersecurity of online businesses.",
         includes: "Included",
         bullets: [
           "Real analysis of your domain",
@@ -503,13 +551,13 @@ export const resources = {
         ],
         emailLabel: "Your email to receive the report",
         emailPlaceholder: "you@company.com",
-        button: "Run full analysis and action plan",
+        button: "Run your free diagnosis",
         buttonLoading: "Processing…",
         error: "We couldn't start your diagnosis. Please try again in a few seconds.",
         emailRequired: "Enter your email to continue.",
         emailInvalid: "Please enter a valid email.",
-        canceled: "Payment canceled. You can try again whenever you like.",
-        secure: "Secure payment. No subscription.",
+        domainRequired: "Enter your domain above to continue.",
+        secure: "Always free. No card, no subscription.",
       },
       sample: {
         button: "Download FREE sample report",
@@ -554,7 +602,7 @@ export const resources = {
           "Automated and external",
           "Public configuration signals",
           "Informational and defensive",
-          "Ready in minutes, €99",
+          "Ready in minutes, free",
         ],
         col2t: "Full pentest",
         col2: [
@@ -585,7 +633,11 @@ export const resources = {
           },
           {
             q: "Do you really analyze my domain?",
-            a: "Yes. After payment we run the real analysis on your domain and generate a report with concrete findings.",
+            a: "Yes. Once the domain is verified we run the real analysis and generate a report with concrete findings.",
+          },
+          {
+            q: "Is it really free?",
+            a: "Yes. The full diagnosis and the PDF report are free, with no card and no subscription. It's our contribution to the security of online businesses.",
           },
           {
             q: "Can I fix it myself?",
@@ -625,18 +677,60 @@ export const resources = {
         tagline: "AI-powered web exposure diagnosis.",
         rights: "All rights reserved.",
       },
+      turbineh: {
+        eyebrow: "Behind this diagnosis",
+        title: "TurbineH: your company's knowledge, working with you",
+        lead:
+          "TurbineH turns your company's knowledge — the knowledge living in your documents and systems, and also the knowledge that gets spoken and never written down — into operational intelligence that works with you every day.",
+        blocks: [
+          {
+            t: "Ask by text or by voice",
+            d: "Ask whatever you need and get instant answers, with every answer traceable back to its source.",
+          },
+          {
+            t: "Alerts before the problem",
+            d: "You get warned before the problem reaches you, not once it's already urgent.",
+          },
+          {
+            t: "Automate entire processes",
+            d: "Without writing a line of code. One single provider instead of ten subscriptions that don't talk to each other.",
+          },
+          {
+            t: "Your knowledge under your control",
+            d: "Within your own borders, auditable and always yours.",
+          },
+          {
+            t: "Pricing tied to your business",
+            d: "You pay based on what your company invoices, not per user or per query — roll it out to your whole team without the bill moving.",
+          },
+          {
+            t: "In weeks, not months",
+            d: "No setup cost, with the first process included and up and running.",
+          },
+        ],
+        labTitle: "A European lab behind it",
+        labBody:
+          "We research how to produce more efficient artificial intelligence — swarms of small, specialized models instead of giants that burn enormous resources — so every company that joins doesn't just gain speed and quality in its operation: it pushes forward a European, sovereign and auditable alternative to depending on someone else's infrastructure.",
+        closing: "If you grow, we grow with you.",
+        formTitle: "Let's talk for 20 minutes",
+        formBody: "Leave us your email and pick a slot in the calendar.",
+        emailPlaceholder: "you@company.com",
+        emailInvalid: "Please enter a valid email.",
+        cta: "Book a call",
+        success: "Great! We've opened the calendar in another tab.",
+      },
       verify: {
         loading: "Loading your diagnosis…",
-        confirmingPayment: "Confirming your payment… this can take a few seconds.",
+        confirmingPayment: "Preparing your diagnosis… this can take a few seconds.",
         notFoundTitle: "We couldn't load this diagnosis",
         notFoundBody: "The link may have expired or is invalid. Go back home and try again.",
         backHome: "Back to home",
         successTitle: "Domain verified",
-        successBody: "Domain successfully verified. You can now run the real diagnosis. Once the report is issued, this diagnosis will be considered completed and cannot be run again with the same payment.",
+        successBody: "Domain successfully verified. You can now run the real diagnosis, free of charge. Once the report is issued, this diagnosis will be considered completed.",
         runCta: "Run full diagnosis",
         runCtaStubNote: "Real execution will be wired in the next phase.",
         title: "Verify your domain",
-        intro: "Your payment is confirmed. To run the analysis we need to confirm you're authorized over {{domain}}. We'll send a code to an email on your own domain.",
+        intro: "Almost there. To run the analysis we need to confirm you're authorized over {{domain}}. We'll send a code to an email on your own domain.",
         domainLabel: "Domain to verify",
         domainLocked: "The domain cannot be changed after payment. If it's wrong, contact us.",
         step1Title: "Step 1 · Choose an email on your domain",
