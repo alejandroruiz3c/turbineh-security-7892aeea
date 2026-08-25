@@ -475,11 +475,19 @@ const SEV_STYLES: Record<
 function PreviewSection({
   domain,
   cardKeys,
-  onCta,
+  email,
+  setEmail,
+  onStart,
+  loading,
+  errorMsg,
 }: {
   domain: string;
   cardKeys: readonly (typeof CARD_KEYS)[number][];
-  onCta: () => void;
+  email: string;
+  setEmail: (v: string) => void;
+  onStart: () => void;
+  loading: boolean;
+  errorMsg: string | null;
 }) {
   const { t } = useTranslation();
 
