@@ -1,7 +1,7 @@
 import logoAsset from "@/assets/turbineh-mark.png.asset.json";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-// navigate no longer needed: checkout redirects to Stripe URL
+import { useNavigate } from "@tanstack/react-router";
 import { LangToggle } from "@/components/LangToggle";
 import { normalizeDomain, validateDomain } from "@/lib/domain";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +57,7 @@ function scrollToId(id: string) {
 export function Landing() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "es";
-  // navigate not needed here anymore
+  const navigate = useNavigate();
 
   const [rawDomain, setRawDomain] = useState("");
   const [normalized, setNormalized] = useState<string | null>(null);
@@ -65,7 +65,6 @@ export function Landing() {
   const [email, setEmail] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [canceledMsg, setCanceledMsg] = useState<string | null>(null);
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
@@ -112,30 +111,9 @@ export function Landing() {
     setTimeout(() => scrollToId("preview"), 60);
   };
 
-  // Fire landing_view once on mount + handle Stripe cancel return
+  // Fire landing_view once on mount
   useEffect(() => {
     trackEvent("landing_view", { lang });
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("canceled") === "1") {
-        setCanceledMsg(t("paywall.canceled"));
-        const sid = params.get("sid");
-        if (sid) {
-          try {
-            void supabase.functions
-              .invoke("trigger-retry", { body: { scanRequestId: sid } })
-              .catch(() => {});
-          } catch {
-            /* ignore */
-          }
-        }
-        // Clean the URL so the banner doesn't persist on reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete("canceled");
-        url.searchParams.delete("sid");
-        window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
-      }
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -147,15 +125,43 @@ export function Landing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalized]);
 
-  const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/6oU14ofxUfqR4cfdLe2oE03";
-
-  const handleCheckout = () => {
-    trackEvent("unlock_clicked", {
-      lang,
-      meta: { domain: normalized ?? undefined },
-    });
-    if (typeof window !== "undefined") {
-      window.open(STRIPE_CHECKOUT_URL, "_blank", "noopener,noreferrer");
+  const handleFreeStart = async () => {
+    const domain = normalized ?? normalizeDomain(rawDomain);
+    if (!domain || validateDomain(domain)) {
+      setCheckoutError(t("paywall.domainRequired"));
+      scrollToId("domain-input");
+      return;
+    }
+    const mail = email.trim();
+    if (!mail) {
+      setCheckoutError(t("paywall.emailRequired"));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      setCheckoutError(t("paywall.emailInvalid"));
+      return;
+    }
+    setCheckoutError(null);
+    setCheckoutLoading(true);
+    trackEvent("unlock_clicked", { lang, meta: { domain } });
+    try {
+      const { data, error } = await supabase.functions.invoke("start-free-diagnosis", {
+        body: { domain, email: mail, lang },
+      });
+      const payload = data as { scanRequestId?: string; error?: string } | null;
+      if (error || !payload?.scanRequestId) {
+        setCheckoutError(t("paywall.error"));
+        setCheckoutLoading(false);
+        return;
+      }
+      navigate({
+        to: "/verify/$id",
+        params: { id: payload.scanRequestId },
+        search: { lang } as never,
+      });
+    } catch {
+      setCheckoutError(t("paywall.error"));
+      setCheckoutLoading(false);
     }
   };
 
