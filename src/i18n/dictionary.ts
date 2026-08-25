@@ -241,6 +241,48 @@ export const resources = {
         tagline: "Diagnóstico de exposición web con IA.",
         rights: "Todos los derechos reservados.",
       },
+      turbineh: {
+        eyebrow: "Detrás de este diagnóstico",
+        title: "TurbineH: el conocimiento de tu empresa, trabajando contigo",
+        lead:
+          "TurbineH convierte el conocimiento de tu empresa —el que vive en tus documentos y tus sistemas, y también el que se habla y nunca queda escrito— en inteligencia operativa que trabaja contigo cada día.",
+        blocks: [
+          {
+            t: "Pregunta por texto o por voz",
+            d: "Consulta lo que necesites y recibe respuestas al momento, con cada respuesta trazable hasta su origen.",
+          },
+          {
+            t: "Alertas antes del problema",
+            d: "Te avisa antes de que el problema te llegue, no cuando ya es urgente.",
+          },
+          {
+            t: "Automatiza procesos completos",
+            d: "Sin escribir una línea de código. Un solo proveedor en lugar de diez suscripciones que no se hablan entre sí.",
+          },
+          {
+            t: "Tu conocimiento bajo tu control",
+            d: "Dentro de tus fronteras, auditable y siempre tuyo.",
+          },
+          {
+            t: "Precio ligado a tu negocio",
+            d: "Pagas según lo que factura tu empresa, no por usuario ni por consulta: despliégalo con todo tu equipo sin que la factura se mueva.",
+          },
+          {
+            t: "En semanas, no en meses",
+            d: "Sin coste de puesta en marcha y con el primer proceso incluido y funcionando.",
+          },
+        ],
+        labTitle: "Un laboratorio europeo detrás",
+        labBody:
+          "Investigamos cómo producir inteligencia artificial más eficiente —enjambres de modelos pequeños y especializados en lugar de gigantes que consumen una barbaridad—, de forma que cada empresa que entra no solo gana velocidad y calidad en su operación: empuja una alternativa europea, soberana y auditable frente a depender de infraestructura ajena.",
+        closing: "Si tú creces, crecemos contigo.",
+        formTitle: "Hablemos 20 minutos",
+        formBody: "Déjanos tu email y elige un hueco en la agenda.",
+        emailPlaceholder: "tu@empresa.com",
+        emailInvalid: "Introduce un email válido.",
+        cta: "Reservar una llamada",
+        success: "¡Perfecto! Te hemos abierto la agenda en otra pestaña.",
+      },
       verify: {
         loading: "Cargando tu diagnóstico…",
         confirmingPayment: "Preparando tu diagnóstico… esto puede tardar unos segundos.",
