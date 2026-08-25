@@ -247,8 +247,8 @@ export function Landing() {
         <DiagnosisVsPentest />
         <WhoItsFor />
         <FAQ />
-        <LegalDisclaimer />
         <TurbineHSection />
+        <LegalDisclaimer />
       </main>
       <Footer />
     </div>
