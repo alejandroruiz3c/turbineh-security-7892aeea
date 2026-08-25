@@ -7,6 +7,16 @@ import { normalizeDomain, validateDomain } from "@/lib/domain";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { SampleReportButton } from "@/components/SampleReportButton";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Shield,
   Mail,
@@ -38,6 +48,29 @@ const CARD_KEYS = [
   "dns",
 ] as const;
 
+type LimitDialogKind = "report_limit_reached" | "daily_budget_reached";
+
+type LimitDialogState = {
+  kind: LimitDialogKind;
+  email: string;
+  domain: string;
+} | null;
+
+type StartDiagnosisPayload = {
+  scanRequestId?: string;
+  error?: string;
+  code?: string;
+  message?: string;
+};
+
+type FunctionErrorWithContext = {
+  context?: {
+    status?: number;
+    json?: () => Promise<unknown>;
+    text?: () => Promise<string>;
+  };
+};
+
 const CARD_ICONS: Record<(typeof CARD_KEYS)[number], React.ComponentType<{ className?: string }>> = {
   headers: Shield,
   dmarc: Mail,
@@ -65,6 +98,7 @@ export function Landing() {
   const [lead, setLead] = useState<Lead>({ name: "", phone: "", email: "", company: "" });
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [limitDialog, setLimitDialog] = useState<LimitDialogState>(null);
 
 
   // Random subset of preview cards, stable per domain
@@ -168,7 +202,13 @@ export function Landing() {
       const { data, error } = await supabase.functions.invoke("start-free-diagnosis", {
         body: { domain, email: mail, name, phone, company, lang },
       });
-      const payload = data as { scanRequestId?: string; error?: string } | null;
+      const payload = data as StartDiagnosisPayload | null;
+      const limitKind = await getStartDiagnosisLimitKind(error, payload);
+      if (limitKind) {
+        setLimitDialog({ kind: limitKind, email: mail, domain });
+        setCheckoutLoading(false);
+        return;
+      }
       if (error || !payload?.scanRequestId) {
         setCheckoutError(t("paywall.error"));
         setCheckoutLoading(false);
@@ -179,7 +219,13 @@ export function Landing() {
         params: { id: payload.scanRequestId },
         search: { lang } as never,
       });
-    } catch {
+    } catch (error) {
+      const limitKind = await getStartDiagnosisLimitKind(error, null);
+      if (limitKind) {
+        setLimitDialog({ kind: limitKind, email: mail, domain });
+        setCheckoutLoading(false);
+        return;
+      }
       setCheckoutError(t("paywall.error"));
       setCheckoutLoading(false);
     }
@@ -251,7 +297,102 @@ export function Landing() {
         <LegalDisclaimer />
       </main>
       <Footer />
+      <LimitDialog
+        state={limitDialog}
+        onOpenChange={(open) => {
+          if (!open) setLimitDialog(null);
+        }}
+      />
     </div>
+  );
+}
+
+async function getStartDiagnosisLimitKind(
+  error: unknown,
+  payload: StartDiagnosisPayload | null,
+): Promise<LimitDialogKind | null> {
+  const payloadCode = payload?.error ?? payload?.code ?? payload?.message;
+  const direct = matchLimitKind(payloadCode);
+  if (direct) return direct;
+
+  const errorMessage = error instanceof Error ? error.message : null;
+  const fromMessage = matchLimitKind(errorMessage);
+  if (fromMessage) return fromMessage;
+
+  const context = (error as FunctionErrorWithContext | null)?.context;
+  const status = context?.status;
+  if (status === 409) return "report_limit_reached";
+  if (status === 503) return "daily_budget_reached";
+
+  if (context?.json) {
+    try {
+      const json = (await context.json()) as StartDiagnosisPayload | null;
+      const fromJson = matchLimitKind(json?.error ?? json?.code ?? json?.message);
+      if (fromJson) return fromJson;
+    } catch {
+      /* response body may already be consumed */
+    }
+  }
+
+  if (context?.text) {
+    try {
+      return matchLimitKind(await context.text());
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function matchLimitKind(value: unknown): LimitDialogKind | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.toLowerCase();
+  if (normalized.includes("report_limit_reached")) return "report_limit_reached";
+  if (normalized.includes("daily_budget_reached")) return "daily_budget_reached";
+  return null;
+}
+
+function LimitDialog({
+  state,
+  onOpenChange,
+}: {
+  state: LimitDialogState;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  const isReportLimit = state?.kind === "report_limit_reached";
+  const Icon = isReportLimit ? FileText : Clock;
+
+  return (
+    <Dialog open={Boolean(state)} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md overflow-hidden border-brand/20 bg-card p-0 shadow-2xl shadow-brand/10 sm:rounded-2xl">
+        <div className="h-1.5 w-full bg-gradient-to-r from-brand via-brand-2 to-cta" />
+        <div className="p-6 md:p-7">
+          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 text-brand">
+            <Icon className="h-5 w-5" />
+          </div>
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
+              {state ? t(`limitDialog.${state.kind}.title`) : null}
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm leading-relaxed text-muted-foreground">
+              {state ? t(`limitDialog.${state.kind}.body`, { email: state.email, domain: state.domain }) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-5 rounded-2xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
+            {state ? t(`limitDialog.${state.kind}.hint`) : null}
+          </div>
+          <DialogFooter className="mt-6 sm:justify-start sm:space-x-0">
+            <DialogClose asChild>
+              <Button className="w-full rounded-xl bg-cta px-5 py-3 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 transition hover:brightness-110">
+                {t("limitDialog.close")}
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
