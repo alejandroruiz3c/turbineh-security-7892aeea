@@ -1,5 +1,10 @@
-// Edge Function: payment-recovery   (invoked by the daily pg_cron job)
+// Edge Function: payment-recovery   — DORMANT
 // ---------------------------------------------------------------------------
+// The diagnosis is now 100% free, so there are no abandoned payments to recover.
+// Its pg_cron job ('payment-recovery-daily') has been UNSCHEDULED, and no new
+// scan can ever reach status='pending_payment' again, so even a manual call
+// would find zero eligible rows. Code kept intact in case payments return.
+//
 // Requires the CRON_SECRET header so ONLY cron can call it. Finds unpaid scans
 // still inside the 7-day / 7-email window and sends the next recovery email to
 // each (atomic claim via claim_recovery_email, shared with the immediate retry).
