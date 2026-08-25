@@ -19,6 +19,15 @@ import { runDiagnostic } from "../_shared/diagnostic.ts";
 import { generateReport } from "../_shared/report.ts";
 import { checkRateLimit, rateLimitBody } from "../_shared/rateLimit.ts";
 import { clientIp } from "../_shared/request.ts";
+import {
+  budgetReachedBody,
+  claimFreeReport,
+  releaseAiBudget,
+  releaseFreeReportClaim,
+  reportLimitBody,
+  reserveAiBudget,
+  verifiedEmailFor,
+} from "../_shared/quota.ts";
 
 // Provided by the Supabase Edge runtime; lets background work outlive the response.
 declare const EdgeRuntime:
@@ -66,7 +75,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const { data: scan, error: scanErr } = await supabase
     .from("scan_requests")
-    .select("id, normalized_domain, status, verification_status, report_consumed")
+    .select("id, normalized_domain, status, verification_status, report_consumed, lang, email")
     .eq("id", scanRequestId)
     .maybeSingle();
 
@@ -109,6 +118,47 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return cors.json({ error: "A report already exists for this scan" }, 409);
   }
 
+  const lang: "es" | "en" = scan.lang === "en" ? "en" : "es";
+
+  // --- Guardrail: one free report per VERIFIED email -----------------------
+  // Authoritative, and deliberately here: this is the last point before we
+  // spend money, and the email has been proven by now (status is 'verified'),
+  // which is what makes the limit worth anything. Keyed on the verified address,
+  // so switching domains does not buy a second report.
+  const verifiedEmail = await verifiedEmailFor(supabase, scan.id, scan.email);
+  const claim = await claimFreeReport(
+    supabase,
+    verifiedEmail ?? "",
+    scan.id,
+    scan.normalized_domain,
+  );
+  if (!claim.allowed) {
+    if (claim.reason === "internal_error") {
+      return cors.json({ error: "Internal error" }, 500);
+    }
+    return cors.json(reportLimitBody(lang, claim.claimed_domain), 409);
+  }
+
+  // --- Guardrail: daily AI budget -----------------------------------------
+  // Atomic reservation against today's cap. Serialized in SQL, so concurrent
+  // runs cannot both spend the same last dollar.
+  const reservation = await reserveAiBudget(supabase, scan.id);
+  if (!reservation.allowed) {
+    console.warn(
+      `start-diagnostic: budget refused scan ${scan.id} (${reservation.spent}/${reservation.cap} USD)`,
+    );
+    // Give the report slot back — they never got their report.
+    await releaseFreeReportClaim(supabase, scan.id);
+    return cors.json(budgetReachedBody(lang), 503);
+  }
+
+  // From here on, a run that dies without producing a report must hand both the
+  // report slot and the reserved budget back.
+  const releaseGuardrails = async () => {
+    await releaseFreeReportClaim(supabase, scan.id);
+    await releaseAiBudget(supabase, scan.id);
+  };
+
   // Flip to processing + stamp start time BEFORE returning.
   const { error: procErr } = await supabase
     .from("scan_requests")
@@ -119,6 +169,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .eq("id", scan.id);
   if (procErr) {
     console.error("start-diagnostic: failed to set processing", procErr);
+    await releaseGuardrails();
     return cors.json({ error: "Internal error" }, 500);
   }
 
@@ -143,6 +194,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     } catch (e) {
       console.error("start-diagnostic: background engine failed", e);
+      // The engine died before the AI ran: no report, so no charge and no
+      // consumed free slot. (generateReport releases them itself when the
+      // failure happens on its side.)
+      await releaseGuardrails();
       await supabase
         .from("scan_requests")
         .update({

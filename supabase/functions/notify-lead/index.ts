@@ -6,13 +6,14 @@
 // does the insert + email in the BACKGROUND and returns { ok: true }
 // immediately, so it never blocks the frontend under load.
 //
-// POST { type, email?, domain?, lang? }
+// POST { type, email?, domain?, lang?, name?, phone?, company? }
 //   type ∈ {'example_report','domain_submitted','free_diagnosis','turbineh_lead'}
 //     example_report   — visitor asked for the sample report          (email)
 //     domain_submitted — visitor ran the free landing preview         (domain)
 //     free_diagnosis   — visitor started the full free diagnosis      (email+domain)
 //                        (server-to-server, fired by start-free-diagnosis)
-//     turbineh_lead    — bottom-of-site CTA, wants a TurbineH call    (email)
+//     turbineh_lead    — bottom-of-site CTA, wants a TurbineH call
+//                        (name + phone + email + company, ALL REQUIRED)
 //
 //   -> 200 { ok: true }        accepted (email/insert happen in the background)
 //   -> 400 { ok: false }       invalid email / invalid domain / bad type
@@ -39,6 +40,37 @@ interface Body {
   email?: string;
   domain?: string;
   lang?: string;
+  // 'turbineh_lead' only — the bottom-of-site contact form. All required.
+  name?: string;
+  phone?: string;
+  company?: string;
+  // 'free_diagnosis' only — set when the run was refused by a guardrail, so the
+  // internal email says we LOST this lead instead of implying a scan started.
+  blocked?: string;
+}
+
+// Free-text form fields. Trimmed, length-capped (a lead form is a spam target)
+// and required to be non-empty for turbineh_lead.
+const MAX_FIELD = 120;
+
+function field(v: unknown): string {
+  return (v ?? "").toString().trim().slice(0, MAX_FIELD);
+}
+
+/** Escape for the HTML email body — these are attacker-controlled free-text. */
+function esc(v: string): string {
+  return v
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// Deliberately permissive: international numbers come in every shape, so we only
+// insist on enough digits to be a real phone rather than impose a format.
+function validPhone(v: string): boolean {
+  const digits = v.replace(/\D/g, "");
+  return digits.length >= 6 && digits.length <= 20 && /^[0-9+()\s.\-]+$/.test(v);
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -93,6 +125,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
   }
 
+  // The bottom-of-site CTA is a real contact form: name, phone, email and
+  // company are ALL mandatory. A partial submission is rejected with the list of
+  // offending fields so the frontend can highlight them.
+  let name = "";
+  let phone = "";
+  let company = "";
+  if (type === "turbineh_lead") {
+    name = field(body.name);
+    phone = field(body.phone);
+    company = field(body.company);
+
+    const missing: string[] = [];
+    if (name.length < 2) missing.push("name");
+    if (!validPhone(phone)) missing.push("phone");
+    if (company.length < 2) missing.push("company");
+    if (missing.length > 0) {
+      return cors.json({ ok: false, error: "invalid_fields", fields: missing }, 400);
+    }
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -136,6 +188,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
         email,
         domain,
         lang,
+        name: name || null,
+        phone: phone || null,
+        company: company || null,
         ip_hash: ipHash,
         customer_id: customerId,
       });
@@ -151,30 +206,41 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const lines: [string, string][] = [];
 
       if (type === "example_report") {
-        subject = "Nuevo informe gratis no pago";
+        subject = "informe ejemplo security turbineh";
         lines.push(["Email", email!]);
       } else if (type === "domain_submitted") {
         subject = "Nuevo dominio gratis no pago";
         lines.push(["Dominio", domain!]);
       } else if (type === "free_diagnosis") {
-        subject = "Nuevo diagnóstico gratuito iniciado";
+        // A blocked run is a lead we LOST — say so in the subject so it is
+        // obvious in the inbox, never dressed up as a started diagnosis.
+        const blocked = field(body.blocked);
+        subject = blocked
+          ? "Diagnóstico gratuito BLOQUEADO (límite)"
+          : "Nuevo diagnóstico gratuito iniciado";
         lines.push(["Dominio", domain!], ["Email", email!]);
+        if (blocked) lines.push(["Bloqueado por", blocked]);
       } else {
         subject = "Nuevo lead TurbineH (call)";
-        lines.push(["Email", email!]);
+        lines.push(
+          ["Nombre", name],
+          ["Empresa", company],
+          ["Teléfono", phone],
+          ["Email", email!],
+        );
       }
       lines.push(["Lang", lang], ["UTC", ts]);
 
       const text = lines.map(([k, v]) => `${k}: ${v}`).join("\n");
       const html =
         `<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#12202F">` +
-        `<p><strong>${subject}</strong></p>` +
+        `<p><strong>${esc(subject)}</strong></p>` +
         `<table style="border-collapse:collapse;font-size:14px">` +
         lines
           .map(
             ([k, v]) =>
-              `<tr><td style="padding:3px 12px 3px 0;color:#48607A">${k}</td>` +
-              `<td style="padding:3px 0"><strong>${v}</strong></td></tr>`,
+              `<tr><td style="padding:3px 12px 3px 0;color:#48607A">${esc(k)}</td>` +
+              `<td style="padding:3px 0"><strong>${esc(v)}</strong></td></tr>`,
           )
           .join("") +
         `</table></div>`;

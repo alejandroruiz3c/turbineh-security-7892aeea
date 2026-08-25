@@ -27,6 +27,12 @@ import { normalizeDomain, validateDomain } from "../_shared/domain.ts";
 import { getOrCreateCustomerId } from "../_shared/customer.ts";
 import { checkRateLimit, rateLimitBody } from "../_shared/rateLimit.ts";
 import { clientIp } from "../_shared/request.ts";
+import {
+  aiBudgetStatus,
+  budgetReachedBody,
+  hasFreeReportClaim,
+  reportLimitBody,
+} from "../_shared/quota.ts";
 
 // Provided by the Supabase Edge runtime; lets the notify call outlive the response.
 declare const EdgeRuntime:
@@ -40,6 +46,40 @@ interface Body {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Fire-and-forget server-to-server notify-lead call. Never awaited by the
+ * handler: losing an internal notification must never cost the user their scan.
+ */
+function fireNotifyLead(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  payload: Record<string, unknown>,
+): void {
+  const task = (async () => {
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/notify-lead`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        console.error("start-free-diagnosis: notify-lead returned", res.status);
+      }
+    } catch (e) {
+      console.error("start-free-diagnosis: notify-lead call failed", e);
+    }
+  })();
+
+  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
+    EdgeRuntime.waitUntil(task);
+  } else {
+    task.catch((e) => console.error("start-free-diagnosis: notify error", e));
+  }
+}
 
 // --- Abuse caps -------------------------------------------------------------
 // Tight on purpose: every scan that reaches 'verified' costs us an AI report.
@@ -104,6 +144,38 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return cors.json(rateLimitBody(lang), 429);
   }
 
+  // --- Guardrail 1: system-wide daily AI budget ----------------------------
+  // Checked here, right after the form is submitted, so the user gets the "come
+  // back after 00:00" dialog instead of walking through email verification only
+  // to hit a wall. The binding check is the atomic reservation in
+  // start-diagnostic; this one is purely for a good, early message.
+  const budget = await aiBudgetStatus(supabase);
+  if (budget?.exhausted) {
+    console.warn(
+      `start-free-diagnosis: daily budget exhausted (${budget.spent}/${budget.cap} USD on ${budget.day})`,
+    );
+    // The visitor is still a lead worth knowing about — tell ourselves we lost
+    // one to the cap, then refuse the run.
+    fireNotifyLead(supabaseUrl, serviceRoleKey, {
+      type: "free_diagnosis",
+      email,
+      domain: normalizedDomain,
+      lang,
+      blocked: "daily_budget",
+    });
+    return cors.json(budgetReachedBody(lang), 503);
+  }
+
+  // --- Guardrail 2: one free report per email ------------------------------
+  // Advisory at this point (the address is not verified yet), but it catches the
+  // common case of the same person coming back, and saves them the verification
+  // round-trip. The authoritative claim happens in start-diagnostic against the
+  // address they actually proved control of.
+  const prior = await hasFreeReportClaim(supabase, email);
+  if (prior.claimed) {
+    return cors.json(reportLimitBody(lang, prior.claimed_domain), 409);
+  }
+
   // --- Canonical customer (one user per email) -----------------------------
   const customerId = await getOrCreateCustomerId(supabase, email, lang);
 
@@ -127,34 +199,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   // --- Notify us of the lead (background; never blocks the user) -----------
-  const notify = (async () => {
-    try {
-      const res = await fetch(`${supabaseUrl}/functions/v1/notify-lead`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-        body: JSON.stringify({
-          type: "free_diagnosis",
-          email,
-          domain: normalizedDomain,
-          lang,
-        }),
-      });
-      if (!res.ok) {
-        console.error("start-free-diagnosis: notify-lead returned", res.status);
-      }
-    } catch (e) {
-      console.error("start-free-diagnosis: notify-lead call failed", e);
-    }
-  })();
-
-  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
-    EdgeRuntime.waitUntil(notify);
-  } else {
-    notify.catch((e) => console.error("start-free-diagnosis: notify error", e));
-  }
+  fireNotifyLead(supabaseUrl, serviceRoleKey, {
+    type: "free_diagnosis",
+    email,
+    domain: normalizedDomain,
+    lang,
+  });
 
   return cors.json(
     {

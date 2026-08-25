@@ -21,6 +21,11 @@
 import { computeScore, type ScoredFinding, type Severity } from "./score.ts";
 import { ensureReportPdf } from "./pdfStore.ts";
 import { sendReportEmail } from "./reportEmail.ts";
+import {
+  releaseAiBudget,
+  releaseFreeReportClaim,
+  settleAiSpend,
+} from "./quota.ts";
 
 const ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-fable-5";
@@ -394,7 +399,7 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
   const model = Deno.env.get("AI_MODEL") || DEFAULT_MODEL;
   if (!apiKey) {
     console.error("generateReport: AI_API_KEY not set");
-    await failScan(supabase, scan.id);
+    await failScan(supabase, scan.id, null);
     return { ok: false, status: 500, body: { error: "AI not configured" } };
   }
 
@@ -405,14 +410,14 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
 
   if (!result.ok || !result.report) {
     console.error("generateReport: model call failed", result.error);
-    await failScan(supabase, scan.id);
+    await failScan(supabase, scan.id, result.cost ?? 0);
     return { ok: false, status: 502, body: { error: "Report generation failed", reason: result.error } };
   }
 
   const validationError = validateReport(result.report, score.findings.length);
   if (validationError) {
     console.error("generateReport: invalid report JSON", validationError);
-    await failScan(supabase, scan.id);
+    await failScan(supabase, scan.id, result.cost ?? 0);
     return { ok: false, status: 502, body: { error: "Report validation failed", reason: validationError } };
   }
 
@@ -464,9 +469,14 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
   });
   if (insErr) {
     console.error("generateReport: insert failed", insErr);
-    await failScan(supabase, scan.id);
+    await failScan(supabase, scan.id, result.cost ?? 0);
     return { ok: false, status: 500, body: { error: "Internal error" } };
   }
+
+  // Book the REAL cost against today's budget, replacing the reservation's
+  // estimate. Must happen whether or not the status update below succeeds — the
+  // money is already spent either way.
+  await settleAiSpend(supabase, scan.id, result.cost ?? 0);
 
   const { error: updErr } = await supabase
     .from("scan_requests")
@@ -507,11 +517,33 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
   };
 }
 
+/**
+ * Mark the scan failed and unwind the guardrails.
+ *
+ * The free-report slot is ALWAYS handed back — the user got no report, so it
+ * would be unfair to burn their one attempt.
+ *
+ * The budget is different: a failed model call still costs real money. Pass the
+ * tokens actually spent (0 is fine) to book it against today's cap, or null when
+ * the model was never called at all, which releases the reservation. Releasing a
+ * run that did spend would under-count the day and let us blow past the cap.
+ */
 // deno-lint-ignore no-explicit-any
-async function failScan(supabase: any, scanId: string): Promise<void> {
+async function failScan(
+  supabase: any,
+  scanId: string,
+  spentUsd: number | null,
+): Promise<void> {
   const { error } = await supabase
     .from("scan_requests")
     .update({ status: "failed" })
     .eq("id", scanId);
   if (error) console.error("generateReport: failed to set status=failed", error);
+
+  await releaseFreeReportClaim(supabase, scanId);
+  if (spentUsd === null) {
+    await releaseAiBudget(supabase, scanId);
+  } else {
+    await settleAiSpend(supabase, scanId, spentUsd);
+  }
 }
