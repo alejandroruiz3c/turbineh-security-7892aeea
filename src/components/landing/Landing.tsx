@@ -637,13 +637,42 @@ function PreviewSection({
         <p className="mx-auto mt-10 max-w-3xl text-center text-sm text-muted-foreground">
           {t("preview.closing")}
         </p>
-        <div className="mt-8 text-center">
-          <button
-            onClick={onCta}
-            className="inline-flex items-center gap-2 rounded-xl bg-cta px-6 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition"
-          >
-            {t("paywall.button")} <ArrowRight className="h-4 w-4" />
-          </button>
+        <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("paywall.emailLabel")}
+          </label>
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("paywall.emailPlaceholder") as string}
+              className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
+            />
+            <button
+              onClick={onStart}
+              disabled={loading}
+              aria-busy={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-cta px-6 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {loading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
+                  {t("paywall.buttonLoading")}
+                </>
+              ) : (
+                <>
+                  {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </div>
+          {errorMsg && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {errorMsg}
+            </p>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">{t("paywall.secure")}</p>
         </div>
       </div>
     </section>
