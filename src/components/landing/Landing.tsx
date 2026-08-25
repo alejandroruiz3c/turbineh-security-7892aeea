@@ -62,9 +62,10 @@ export function Landing() {
   const [rawDomain, setRawDomain] = useState("");
   const [normalized, setNormalized] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
+  const [lead, setLead] = useState<Lead>({ name: "", phone: "", email: "", company: "" });
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
