@@ -977,6 +977,112 @@ function LegalDisclaimer() {
   );
 }
 
+/* ---------------- TURBINEH COMPANY ---------------- */
+const CALENDLY_URL = "https://calendly.com/alejandroruiz3c/turbineh-alex-ruiz";
+
+function TurbineHSection() {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("en") ? "en" : "es";
+  const blocks = t("turbineh.blocks", { returnObjects: true }) as { t: string; d: string }[];
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const handleBook = () => {
+    const mail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      setError(t("turbineh.emailInvalid"));
+      return;
+    }
+    setError(null);
+    // Open synchronously to avoid popup blockers
+    if (typeof window !== "undefined") {
+      window.open(CALENDLY_URL, "_blank", "noopener");
+    }
+    try {
+      void supabase.functions
+        .invoke("notify-lead", { body: { type: "turbineh_lead", email: mail, lang } })
+        .catch(() => {});
+    } catch {
+      /* ignore */
+    }
+    setDone(true);
+  };
+
+  return (
+    <section className="relative overflow-hidden bg-[var(--brand-navy)] text-white">
+      <div className="pointer-events-none absolute inset-0 cyber-grid opacity-30" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-[var(--brand-green)]/10 blur-3xl" />
+      <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--brand-green-lime)]">
+            <img src={logoAsset.url} alt="" width={16} height={16} className="h-4 w-4" />
+            {t("turbineh.eyebrow")}
+          </div>
+          <h2 className="mt-5 text-3xl font-bold tracking-tight md:text-4xl">
+            {t("turbineh.title")}
+          </h2>
+          <p className="mt-5 text-base leading-relaxed text-[var(--text-muted)] md:text-lg">
+            {t("turbineh.lead")}
+          </p>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {blocks.map((b) => (
+            <div
+              key={b.t}
+              className="reveal rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-[var(--brand-green)]/40"
+            >
+              <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand-green)]/15 text-[var(--brand-green-lime)]">
+                <Check className="h-4 w-4" strokeWidth={3} />
+              </div>
+              <h3 className="text-base font-semibold">{b.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{b.d}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 grid gap-6 rounded-3xl border border-white/10 bg-white/[0.03] p-8 md:grid-cols-[1.3fr_1fr] md:p-10">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--brand-green-lime)]">
+              <Sparkles className="h-3.5 w-3.5" /> {t("turbineh.labTitle")}
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)]">
+              {t("turbineh.labBody")}
+            </p>
+            <p className="mt-5 text-lg font-semibold text-white">{t("turbineh.closing")}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-[var(--brand-navy-2)] p-6">
+            <h3 className="text-lg font-semibold">{t("turbineh.formTitle")}</h3>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">{t("turbineh.formBody")}</p>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("turbineh.emailPlaceholder") as string}
+              className="mt-4 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-[var(--brand-green)]"
+            />
+            <button
+              onClick={handleBook}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-green)] px-5 py-3.5 text-sm font-semibold text-[var(--brand-navy)] transition hover:brightness-110"
+            >
+              {t("turbineh.cta")} <ArrowRight className="h-4 w-4" />
+            </button>
+            {error && (
+              <p role="alert" className="mt-2 text-sm text-red-300">
+                {error}
+              </p>
+            )}
+            {done && !error && (
+              <p className="mt-2 text-sm text-[var(--brand-green-lime)]">{t("turbineh.success")}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------------- FOOTER ---------------- */
 function Footer() {
   const { t } = useTranslation();
