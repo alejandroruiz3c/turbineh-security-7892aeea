@@ -817,44 +817,17 @@ function Paywall({
                 <span className="text-sm text-muted-foreground">/ {t("hero.reassure.once")}</span>
               </div>
               <div className="mt-6 space-y-3">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("paywall.emailLabel")}
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("paywall.emailPlaceholder") as string}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
+                <LeadForm
+                  lead={lead}
+                  setLead={setLead}
+                  onSubmit={onCheckout}
+                  loading={loading}
+                  errorMsg={errorMsg}
+                  compact
                 />
-                <button
-                  onClick={onCheckout}
-                  disabled={loading}
-                  aria-busy={loading}
-                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-5 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
-                      {t("paywall.buttonLoading")}
-                    </>
-                  ) : (
-                    <>
-                      {t("paywall.button")} <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-                {errorMsg && (
-                  <p role="alert" className="mt-2 text-sm text-destructive">
-                    {errorMsg}
-                  </p>
-                )}
                 <SampleReportButton className="w-full" />
-                <p className="text-xs text-muted-foreground">{t("paywall.secure")}</p>
-
-
-
               </div>
+
             </div>
           </div>
         </div>
