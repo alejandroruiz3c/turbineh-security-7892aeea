@@ -131,11 +131,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
   let name = "";
   let phone = "";
   let company = "";
-  if (type === "turbineh_lead") {
+  if (type === "turbineh_lead" || type === "free_diagnosis") {
     name = field(body.name);
     phone = field(body.phone);
     company = field(body.company);
-
+  }
+  // Only the bottom-of-site CTA makes them mandatory. For free_diagnosis they are
+  // best-effort passengers: refusing the notification over a missing phone would
+  // lose us a lead that has already started a scan.
+  if (type === "turbineh_lead") {
     const missing: string[] = [];
     if (name.length < 2) missing.push("name");
     if (!validPhone(phone)) missing.push("phone");
@@ -219,6 +223,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
           ? "Diagnóstico gratuito BLOQUEADO (límite)"
           : "Nuevo diagnóstico gratuito iniciado";
         lines.push(["Dominio", domain!], ["Email", email!]);
+        if (name) lines.push(["Nombre", name]);
+        if (company) lines.push(["Empresa", company]);
+        if (phone) lines.push(["Teléfono", phone]);
         if (blocked) lines.push(["Bloqueado por", blocked]);
       } else {
         subject = "Nuevo lead TurbineH (call)";

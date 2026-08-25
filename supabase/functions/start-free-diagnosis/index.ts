@@ -3,7 +3,14 @@
 // THE entry point of the (now 100% FREE) web-exposure diagnosis. Replaces
 // create-checkout-session / mock-unlock: there is no payment anywhere anymore.
 //
-// POST { domain, email, lang } -> 200 { scanRequestId, normalizedDomain, status }
+// POST { domain, email, name, phone, company, lang }
+//   -> 200 { scanRequestId, normalizedDomain, status }
+//
+// The landing form requires all of name/phone/email/company before it submits,
+// so they are captured onto the canonical customer and forwarded to notify-lead.
+// They are NOT re-validated as mandatory here: a missing phone must never cost us
+// a lead that already proved intent by typing in a domain. The email + domain are
+// the only fields the pipeline actually depends on.
 //
 // It creates a scan_requests row already in the verification-ready state, so the
 // very next step is send-verification-code -> verify-domain. That email-at-the-
@@ -43,6 +50,15 @@ interface Body {
   domain?: string;
   email?: string;
   lang?: string;
+  name?: string;
+  phone?: string;
+  company?: string;
+}
+
+/** Trim + cap a free-text form field (public endpoint: assume hostile input). */
+const MAX_FIELD = 120;
+function field(v: unknown): string {
+  return (v ?? "").toString().trim().slice(0, MAX_FIELD);
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -111,6 +127,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return cors.json({ error: "Invalid email" }, 400);
   }
 
+  const name = field(body.name);
+  const phone = field(body.phone);
+  const company = field(body.company);
+
   const rawDomain = (body.domain ?? "").toString();
   const normalizedDomain = normalizeDomain(rawDomain);
   const validation = validateDomain(normalizedDomain);
@@ -161,6 +181,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       email,
       domain: normalizedDomain,
       lang,
+      name,
+      phone,
+      company,
       blocked: "daily_budget",
     });
     return cors.json(budgetReachedBody(lang), 503);
@@ -178,6 +201,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // --- Canonical customer (one user per email) -----------------------------
   const customerId = await getOrCreateCustomerId(supabase, email, lang);
+
+  // Keep the contact details the form collected. Additive: a blank value never
+  // overwrites one we already have (see upsert_customer_contact).
+  if (customerId && (name || phone || company)) {
+    const { error: contactErr } = await supabase.rpc("upsert_customer_contact", {
+      p_customer_id: customerId,
+      p_name: name || null,
+      p_phone: phone || null,
+      p_company: company || null,
+    });
+    if (contactErr) {
+      // Non-fatal: losing the phone number must not cost the user their scan.
+      console.error("start-free-diagnosis: contact upsert failed", contactErr);
+    }
+  }
 
   // --- Scan request, straight to the verification-ready state --------------
   const { data: scan, error: scanErr } = await supabase
@@ -204,6 +242,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     email,
     domain: normalizedDomain,
     lang,
+    name,
+    phone,
+    company,
   });
 
   return cors.json(
