@@ -62,9 +62,10 @@ export function Landing() {
   const [rawDomain, setRawDomain] = useState("");
   const [normalized, setNormalized] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
+  const [lead, setLead] = useState<Lead>({ name: "", phone: "", email: "", company: "" });
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
@@ -132,7 +133,14 @@ export function Landing() {
       scrollToId("domain-input");
       return;
     }
-    const mail = email.trim();
+    const name = lead.name.trim();
+    const phone = lead.phone.trim();
+    const company = lead.company.trim();
+    const mail = lead.email.trim();
+    if (!name) {
+      setCheckoutError(t("paywall.nameRequired"));
+      return;
+    }
     if (!mail) {
       setCheckoutError(t("paywall.emailRequired"));
       return;
@@ -141,12 +149,24 @@ export function Landing() {
       setCheckoutError(t("paywall.emailInvalid"));
       return;
     }
+    if (!phone) {
+      setCheckoutError(t("paywall.phoneRequired"));
+      return;
+    }
+    if (!/^[+()\d\s.-]{6,20}$/.test(phone)) {
+      setCheckoutError(t("paywall.phoneInvalid"));
+      return;
+    }
+    if (!company) {
+      setCheckoutError(t("paywall.companyRequired"));
+      return;
+    }
     setCheckoutError(null);
     setCheckoutLoading(true);
     trackEvent("unlock_clicked", { lang, meta: { domain } });
     try {
       const { data, error } = await supabase.functions.invoke("start-free-diagnosis", {
-        body: { domain, email: mail, lang },
+        body: { domain, email: mail, name, phone, company, lang },
       });
       const payload = data as { scanRequestId?: string; error?: string } | null;
       if (error || !payload?.scanRequestId) {
@@ -164,6 +184,7 @@ export function Landing() {
       setCheckoutLoading(false);
     }
   };
+
 
   // Reveal-on-scroll for elements with `.reveal`
   useEffect(() => {
@@ -204,16 +225,17 @@ export function Landing() {
           <PreviewSection
             domain={normalized}
             cardKeys={previewCards}
-            email={email}
-            setEmail={setEmail}
+            lead={lead}
+            setLead={setLead}
             onStart={handleFreeStart}
             loading={checkoutLoading}
             errorMsg={checkoutError}
           />
         )}
         <Paywall
-          email={email}
-          setEmail={setEmail}
+          lead={lead}
+          setLead={setLead}
+
           onCheckout={handleFreeStart}
           loading={checkoutLoading}
           errorMsg={checkoutError}
@@ -472,23 +494,118 @@ const SEV_STYLES: Record<
   },
 };
 
+export type Lead = { name: string; phone: string; email: string; company: string };
+
+/* ---------------- LEAD FORM ---------------- */
+function LeadForm({
+  lead,
+  setLead,
+  onSubmit,
+  loading,
+  errorMsg,
+  compact,
+}: {
+  lead: Lead;
+  setLead: (v: Lead) => void;
+  onSubmit: () => void;
+  loading: boolean;
+  errorMsg: string | null;
+  compact?: boolean;
+}) {
+  const { t } = useTranslation();
+  const field =
+    "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20";
+  const set = (k: keyof Lead) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setLead({ ...lead, [k]: e.target.value });
+
+  const fields: { k: keyof Lead; label: string; ph: string; type: string; auto: string }[] = [
+    { k: "name", label: "nameLabel", ph: "namePlaceholder", type: "text", auto: "name" },
+    { k: "company", label: "companyLabel", ph: "companyPlaceholder", type: "text", auto: "organization" },
+    { k: "email", label: "emailLabel", ph: "emailPlaceholder", type: "email", auto: "email" },
+    { k: "phone", label: "phoneLabel", ph: "phonePlaceholder", type: "tel", auto: "tel" },
+  ];
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      noValidate
+      className="space-y-4"
+    >
+      <div>
+        <h3 className="text-base font-semibold tracking-tight">{t("paywall.formTitle")}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">{t("paywall.formHint")}</p>
+      </div>
+      <div className={compact ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+        {fields.map((f) => (
+          <div key={f.k}>
+            <label
+              htmlFor={`lead-${compact ? "b" : "a"}-${f.k}`}
+              className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              {t(`paywall.${f.label}`)} <span className="text-cta">*</span>
+            </label>
+            <input
+              id={`lead-${compact ? "b" : "a"}-${f.k}`}
+              type={f.type}
+              required
+              autoComplete={f.auto}
+              maxLength={120}
+              value={lead[f.k]}
+              onChange={set(f.k)}
+              placeholder={t(`paywall.${f.ph}`) as string}
+              className={`mt-1.5 ${field}`}
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        aria-busy={loading}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-6 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {loading ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
+            {t("paywall.buttonLoading")}
+          </>
+        ) : (
+          <>
+            {t("paywall.button")} <ArrowRight className="h-4 w-4" />
+          </>
+        )}
+      </button>
+      {errorMsg && (
+        <p role="alert" className="text-sm text-destructive">
+          {errorMsg}
+        </p>
+      )}
+      <p className="text-xs text-muted-foreground">{t("paywall.secure")}</p>
+    </form>
+  );
+}
+
 function PreviewSection({
   domain,
   cardKeys,
-  email,
-  setEmail,
+  lead,
+  setLead,
   onStart,
   loading,
   errorMsg,
 }: {
   domain: string;
   cardKeys: readonly (typeof CARD_KEYS)[number][];
-  email: string;
-  setEmail: (v: string) => void;
+  lead: Lead;
+  setLead: (v: Lead) => void;
   onStart: () => void;
   loading: boolean;
   errorMsg: string | null;
 }) {
+
   const { t } = useTranslation();
 
   // Sort by severity to compute priority numbers
@@ -637,43 +754,16 @@ function PreviewSection({
         <p className="mx-auto mt-10 max-w-3xl text-center text-sm text-muted-foreground">
           {t("preview.closing")}
         </p>
-        <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("paywall.emailLabel")}
-          </label>
-          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("paywall.emailPlaceholder") as string}
-              className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
-            />
-            <button
-              onClick={onStart}
-              disabled={loading}
-              aria-busy={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-cta px-6 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loading ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
-                  {t("paywall.buttonLoading")}
-                </>
-              ) : (
-                <>
-                  {t("paywall.button")} <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </div>
-          {errorMsg && (
-            <p role="alert" className="mt-2 text-sm text-destructive">
-              {errorMsg}
-            </p>
-          )}
-          <p className="mt-3 text-xs text-muted-foreground">{t("paywall.secure")}</p>
+        <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <LeadForm
+            lead={lead}
+            setLead={setLead}
+            onSubmit={onStart}
+            loading={loading}
+            errorMsg={errorMsg}
+          />
         </div>
+
       </div>
     </section>
   );
@@ -681,18 +771,19 @@ function PreviewSection({
 
 /* ---------------- PAYWALL ---------------- */
 function Paywall({
-  email,
-  setEmail,
+  lead,
+  setLead,
   onCheckout,
   loading,
   errorMsg,
 }: {
-  email: string;
-  setEmail: (v: string) => void;
+  lead: Lead;
+  setLead: (v: Lead) => void;
   onCheckout: () => void;
   loading: boolean;
   errorMsg: string | null;
 }) {
+
   const { t } = useTranslation();
   const bullets = t("paywall.bullets", { returnObjects: true }) as string[];
   return (
@@ -726,44 +817,17 @@ function Paywall({
                 <span className="text-sm text-muted-foreground">/ {t("hero.reassure.once")}</span>
               </div>
               <div className="mt-6 space-y-3">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("paywall.emailLabel")}
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("paywall.emailPlaceholder") as string}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
+                <LeadForm
+                  lead={lead}
+                  setLead={setLead}
+                  onSubmit={onCheckout}
+                  loading={loading}
+                  errorMsg={errorMsg}
+                  compact
                 />
-                <button
-                  onClick={onCheckout}
-                  disabled={loading}
-                  aria-busy={loading}
-                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cta px-5 py-3.5 text-sm font-semibold text-cta-foreground shadow-md shadow-cta/20 hover:brightness-110 transition disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-cta-foreground/40 border-t-cta-foreground" />
-                      {t("paywall.buttonLoading")}
-                    </>
-                  ) : (
-                    <>
-                      {t("paywall.button")} <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-                {errorMsg && (
-                  <p role="alert" className="mt-2 text-sm text-destructive">
-                    {errorMsg}
-                  </p>
-                )}
                 <SampleReportButton className="w-full" />
-                <p className="text-xs text-muted-foreground">{t("paywall.secure")}</p>
-
-
-
               </div>
+
             </div>
           </div>
         </div>
