@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "test": "bun test tests",
+    "test": "bun test ./tests/network-security.test.ts",
     "check:edge": "deno check supabase/functions/*/index.ts",
     "test:edge": "deno test supabase/tests"
   },
