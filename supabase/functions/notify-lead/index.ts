@@ -31,9 +31,7 @@ import { sendEmail } from "../_shared/email.ts";
 import { getOrCreateCustomerId } from "../_shared/customer.ts";
 
 // Provided by the Supabase Edge runtime; lets the insert+email outlive the response.
-declare const EdgeRuntime:
-  | { waitUntil(promise: Promise<unknown>): void }
-  | undefined;
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
 
 interface Body {
   type?: string;
@@ -70,17 +68,12 @@ function esc(v: string): string {
 // insist on enough digits to be a real phone rather than impose a format.
 function validPhone(v: string): boolean {
   const digits = v.replace(/\D/g, "");
-  return digits.length >= 6 && digits.length <= 20 && /^[0-9+()\s.\-]+$/.test(v);
+  return digits.length >= 6 && digits.length <= 20 && /^[0-9+()\s.-]+$/.test(v);
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const TYPES = new Set([
-  "example_report",
-  "domain_submitted",
-  "free_diagnosis",
-  "turbineh_lead",
-]);
+const TYPES = new Set(["example_report", "domain_submitted", "free_diagnosis", "turbineh_lead"]);
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const cors = makeCors(req);
@@ -147,7 +140,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // landing does) would otherwise drop the visitor on the floor while showing
   // them a success message. The 400 + field list is still returned so a form that
   // DOES render them can highlight what is wrong.
-  let incomplete: string[] = [];
+  const incomplete: string[] = [];
   if (type === "turbineh_lead") {
     if (name.length < 2) incomplete.push("name");
     if (!validPhone(phone)) incomplete.push("phone");
@@ -189,9 +182,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     try {
       const ipHash = await hashIp(ip);
       // Link email-bearing leads to the canonical customer (one user per email).
-      const customerId = email
-        ? await getOrCreateCustomerId(supabase, email, lang)
-        : null;
+      const customerId = email ? await getOrCreateCustomerId(supabase, email, lang) : null;
       await supabase.from("leads").insert({
         type,
         email,
@@ -233,9 +224,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (phone) lines.push(["Teléfono", phone]);
         if (blocked) lines.push(["Bloqueado por", blocked]);
       } else {
-        subject = incomplete.length > 0
-          ? "Nuevo lead TurbineH (call) — FORM INCOMPLETO"
-          : "Nuevo lead TurbineH (call)";
+        subject =
+          incomplete.length > 0
+            ? "Nuevo lead TurbineH (call) — FORM INCOMPLETO"
+            : "Nuevo lead TurbineH (call)";
         lines.push(
           ["Nombre", name || "(no facilitado)"],
           ["Empresa", company || "(no facilitado)"],

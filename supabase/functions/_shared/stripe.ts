@@ -37,7 +37,7 @@ export async function constructWebhookEvent(
 
 export interface CheckoutInput {
   scanRequestId: string;
-  domain: string;          // raw
+  domain: string; // raw
   normalizedDomain: string;
   email: string;
   lang: "es" | "en";
@@ -47,9 +47,7 @@ export interface CheckoutInput {
  * Create a Checkout Session for a scan. Shared by create-checkout-session and
  * resume-checkout so the session shape is identical in both places.
  */
-export async function createScanCheckout(
-  input: CheckoutInput,
-): Promise<Stripe.Checkout.Session> {
+export async function createScanCheckout(input: CheckoutInput): Promise<Stripe.Checkout.Session> {
   const stripe = getStripe();
   const priceId = Deno.env.get("STRIPE_PRICE_ID");
   if (!priceId) throw new Error("STRIPE_PRICE_ID not set");

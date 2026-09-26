@@ -38,7 +38,7 @@ function headersFor(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, x-bypass-secret",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 }
 
@@ -56,9 +56,7 @@ export function makeCors(req: Request): Cors {
   return {
     headers,
     preflight() {
-      return req.method === "OPTIONS"
-        ? new Response(null, { status: 204, headers })
-        : null;
+      return req.method === "OPTIONS" ? new Response(null, { status: 204, headers }) : null;
     },
     json(body: unknown, status = 200) {
       return new Response(JSON.stringify(body), {

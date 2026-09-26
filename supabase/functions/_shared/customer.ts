@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 // Get-or-create a canonical customer by email (case-insensitive, no duplicates).
 // Backed by the atomic get_or_create_customer() SQL function. Returns the
 // customer id, or null when there's no usable email / on error (non-fatal:
@@ -5,7 +6,7 @@
 
 // deno-lint-ignore no-explicit-any
 export async function getOrCreateCustomerId(
-  supabase: any,
+  supabase: SupabaseClient,
   email: string | null | undefined,
   lang: string | null | undefined,
 ): Promise<string | null> {

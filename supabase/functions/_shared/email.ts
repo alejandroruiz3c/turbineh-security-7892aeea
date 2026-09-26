@@ -45,9 +45,7 @@ const RESEND_ENDPOINT = "https://api.resend.com/emails";
  * to react (e.g. surface a friendly message) without try/catch noise. Callers
  * MUST NOT forward `error` verbatim to end users.
  */
-export async function sendEmail(
-  params: SendEmailParams,
-): Promise<SendEmailResult> {
+export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const from = Deno.env.get("FROM_EMAIL");
 

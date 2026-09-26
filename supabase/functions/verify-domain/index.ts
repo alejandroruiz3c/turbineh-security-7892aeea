@@ -24,17 +24,12 @@ interface Body {
   code?: string;
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const METHOD = "email_domain";
 
 // States from which verification may proceed.
-const VERIFIABLE = new Set([
-  "paid_pending_verification",
-  "verification_failed",
-  "verified",
-]);
+const VERIFIABLE = new Set(["paid_pending_verification", "verification_failed", "verified"]);
 
 const MAX_ATTEMPTS = 6;
 
@@ -70,13 +65,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // --- Rate limit: cap code guesses per (scan + IP) per minute --------------
   // (On top of the stored 6-attempt lock per scan.) Blocks rapid brute forcing.
   const ip = clientIp(req);
-  const rlOk = await checkRateLimit(
-    supabase,
-    `${scanRequestId}:${ip}`,
-    "verify_domain",
-    10,
-    60,
-  );
+  const rlOk = await checkRateLimit(supabase, `${scanRequestId}:${ip}`, "verify_domain", 10, 60);
   if (!rlOk) return cors.json(rateLimitBody(), 429);
 
   // --- Load the scan -------------------------------------------------------
@@ -99,10 +88,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return cors.json({ error: "This report has already been used" }, 409);
   }
   if (!VERIFIABLE.has(scan.status)) {
-    return cors.json(
-      { error: "This scan is not awaiting verification" },
-      409,
-    );
+    return cors.json({ error: "This scan is not awaiting verification" }, 409);
   }
   if (scan.status === "verified") {
     return cors.json({ verified: true }, 200);
@@ -151,10 +137,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // --- Attempt cap ---------------------------------------------------------
   if ((dv.attempts ?? 0) >= MAX_ATTEMPTS) {
-    return cors.json(
-      { verified: false, reason: "too_many_attempts" },
-      200,
-    );
+    return cors.json({ verified: false, reason: "too_many_attempts" }, 200);
   }
 
   // --- Compare -------------------------------------------------------------

@@ -56,28 +56,31 @@ function ProcessingPage() {
     }
   }, [id]);
 
-  const startIfNeeded = useCallback(async (current: ScanState) => {
-    if (startedRef.current) return;
-    if (current.status === "processing" || current.status === "completed") {
+  const startIfNeeded = useCallback(
+    async (current: ScanState) => {
+      if (startedRef.current) return;
+      if (current.status === "processing" || current.status === "completed") {
+        startedRef.current = true;
+        return;
+      }
       startedRef.current = true;
-      return;
-    }
-    startedRef.current = true;
-    setStartError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke("start-diagnostic", {
-        body: { scanRequestId: id },
-      });
-      const payload = data as { status?: string; error?: string } | null;
-      if (error || !payload || payload.error) {
+      setStartError(null);
+      try {
+        const { data, error } = await supabase.functions.invoke("start-diagnostic", {
+          body: { scanRequestId: id },
+        });
+        const payload = data as { status?: string; error?: string } | null;
+        if (error || !payload || payload.error) {
+          setStartError(t("processing.startFailed"));
+          startedRef.current = false;
+        }
+      } catch {
         setStartError(t("processing.startFailed"));
         startedRef.current = false;
       }
-    } catch {
-      setStartError(t("processing.startFailed"));
-      startedRef.current = false;
-    }
-  }, [id, t]);
+    },
+    [id, t],
+  );
 
   // Initial load
   useEffect(() => {
@@ -167,13 +170,9 @@ function ProcessingPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            {t("processing.title")}
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("processing.title")}</h1>
         </div>
-        <p className="mt-4 text-muted-foreground">
-          {t("processing.subtitle", { domain })}
-        </p>
+        <p className="mt-4 text-muted-foreground">{t("processing.subtitle", { domain })}</p>
 
         <div className="mt-8 flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-4">
           <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />

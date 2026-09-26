@@ -30,16 +30,13 @@ import {
 } from "../_shared/quota.ts";
 
 // Provided by the Supabase Edge runtime; lets background work outlive the response.
-declare const EdgeRuntime:
-  | { waitUntil(promise: Promise<unknown>): void }
-  | undefined;
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
 
 interface Body {
   scanRequestId?: string;
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const cors = makeCors(req);
@@ -98,10 +95,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return cors.json({ error: "This report has already been used" }, 409);
   }
   if (scan.status !== "verified" || scan.verification_status !== "verified") {
-    return cors.json(
-      { error: "Scan is not verified", status: scan.status },
-      409,
-    );
+    return cors.json({ error: "Scan is not verified", status: scan.status }, 409);
   }
 
   // Guard: don't run if a report already exists for this scan.

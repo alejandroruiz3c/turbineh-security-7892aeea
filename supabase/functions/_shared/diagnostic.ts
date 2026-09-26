@@ -123,16 +123,11 @@ async function pool<T, R>(
       results[i] = await fn(items[i], i);
     }
   };
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
-  );
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
   return results;
 }
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
-
-export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
+export async function runDiagnostic(normalizedDomain: string) {
   const scannedAt = new Date().toISOString();
   const t0 = Date.now();
   const deadline = t0 + TIME_BUDGET_MS;
@@ -151,10 +146,20 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
     o: { method?: "GET" | "HEAD"; maxBytes?: number; maxRedirects?: number } = {},
   ) => {
     if (used >= MAX_REQUESTS) {
-      return { ok: false as const, error: "budget_exhausted", requestedUrl: url, redirectChain: [] };
+      return {
+        ok: false as const,
+        error: "budget_exhausted",
+        requestedUrl: url,
+        redirectChain: [],
+      };
     }
     if (timeLeft() <= 250) {
-      return { ok: false as const, error: "time_budget_exceeded", requestedUrl: url, redirectChain: [] };
+      return {
+        ok: false as const,
+        error: "time_budget_exceeded",
+        requestedUrl: url,
+        redirectChain: [],
+      };
     }
     used++;
     return await safeFetch(url, {
@@ -177,7 +182,7 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
     maxRedirects: 4,
   });
   let homepage = httpsHome;
-  let httpsReachable = httpsHome.ok;
+  const httpsReachable = httpsHome.ok;
   if (!httpsHome.ok) {
     errors.push({ section: "https", reason: httpsHome.error ?? "unreachable" });
     const httpHome = await req(`http://${normalizedDomain}/`, {
@@ -198,9 +203,7 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
   if (httpProbe.ok) {
     if (httpProbe.status && httpProbe.status >= 300 && httpProbe.status < 400) {
       const loc = httpProbe.location ?? "";
-      httpToHttps = /^https:\/\//i.test(loc)
-        ? "redirects_to_https"
-        : "redirects_non_https";
+      httpToHttps = /^https:\/\//i.test(loc) ? "redirects_to_https" : "redirects_non_https";
     } else if (httpProbe.status && httpProbe.status < 300) {
       httpToHttps = "serves_http_no_redirect";
     } else {
@@ -287,28 +290,30 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
   };
 
   // ---- exposed_paths (FIXED allowlist, presence only) ----------------------
-  const exposed_paths = await pool(
-    EXPOSED_PATH_ALLOWLIST,
-    CONCURRENCY,
-    async (path) => {
-      const r = await req(`https://${normalizedDomain}${path}`, {
-        method: "GET",
-        maxBytes: 16 * 1024,
-        maxRedirects: 0,
-      });
-      if (!r.ok) {
-        return { path, method: "GET", status: null, note: r.error ?? "error" };
-      }
-      return {
-        path,
-        method: "GET",
-        status: r.status ?? null,
-        note: r.location ? `redirect -> ${r.location}` : null,
-        // Keep a tiny body only for wp-login CMS signal (not stored raw).
-        _body: path === "/wp-login.php" ? (r.bodyText ?? "") : undefined,
-      } as { path: string; method: string; status: number | null; note: string | null; _body?: string };
-    },
-  );
+  const exposed_paths = await pool(EXPOSED_PATH_ALLOWLIST, CONCURRENCY, async (path) => {
+    const r = await req(`https://${normalizedDomain}${path}`, {
+      method: "GET",
+      maxBytes: 16 * 1024,
+      maxRedirects: 0,
+    });
+    if (!r.ok) {
+      return { path, method: "GET", status: null, note: r.error ?? "error" };
+    }
+    return {
+      path,
+      method: "GET",
+      status: r.status ?? null,
+      note: r.location ? `redirect -> ${r.location}` : null,
+      // Keep a tiny body only for wp-login CMS signal (not stored raw).
+      _body: path === "/wp-login.php" ? (r.bodyText ?? "") : undefined,
+    } as {
+      path: string;
+      method: string;
+      status: number | null;
+      note: string | null;
+      _body?: string;
+    };
+  });
   const wpLogin = exposed_paths.find((p) => p.path === "/wp-login.php");
   const wpLoginBody = (wpLogin as { _body?: string })?._body ?? "";
   // Strip the internal _body before it goes into raw_findings.
@@ -326,14 +331,15 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
   };
 
   // ---- cms ------------------------------------------------------------------
-  let cms: Json;
+  let cms;
   if (generator && /wordpress/i.test(generator)) {
     cms = { detected: true, name: "WordPress", signal: "generator meta tag", note: null };
   } else if (generator && /(wix|shopify|drupal|joomla|squarespace)/i.test(generator)) {
     const name = generator.match(/(wix|shopify|drupal|joomla|squarespace)/i)![1];
     cms = { detected: true, name, signal: "generator meta tag", note: null };
   } else if (
-    wpLogin && wpLogin.status === 200 &&
+    wpLogin &&
+    wpLogin.status === 200 &&
     /(user_login|wp-submit|loginform)/i.test(wpLoginBody)
   ) {
     cms = {
@@ -347,7 +353,9 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
       detected: false,
       name: null,
       signal: null,
-      note: homepage.ok ? "no CMS fingerprint in generator meta or allowlisted paths" : "homepage unreachable",
+      note: homepage.ok
+        ? "no CMS fingerprint in generator meta or allowlisted paths"
+        : "homepage unreachable",
     };
   }
 
@@ -357,11 +365,15 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
     maxBytes: 64 * 1024,
     maxRedirects: 2,
   });
-  let robots: Json;
+  let robots;
   if (robotsResp.ok && robotsResp.status === 200) {
     const body = robotsResp.bodyText ?? "";
     const disallow = (body.match(/^\s*disallow:\s*\S+/gim) ?? []).length;
-    robots = { present: true, disallow_count: disallow, url: `https://${normalizedDomain}/robots.txt` };
+    robots = {
+      present: true,
+      disallow_count: disallow,
+      url: `https://${normalizedDomain}/robots.txt`,
+    };
   } else {
     robots = {
       present: robotsResp.ok ? false : null,
@@ -376,7 +388,7 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
     method: "HEAD",
     maxRedirects: 2,
   });
-  let sitemap: Json;
+  let sitemap;
   if (sitemapResp.ok && sitemapResp.status === 200) {
     sitemap = { present: true, url: `https://${normalizedDomain}/sitemap.xml` };
   } else {
@@ -388,14 +400,16 @@ export async function runDiagnostic(normalizedDomain: string): Promise<Json> {
   }
 
   // ---- forms (homepage only) ------------------------------------------------
-  let forms: Json;
+  let forms;
   if (homepage.ok) {
     const count = (homeBody.match(/<form\b/gi) ?? []).length;
     const hasPassword = /<input[^>]+type=["']?password["']?/i.test(homeBody);
     forms = {
       count,
       has_password_field: hasPassword,
-      note: homepage.truncated ? "homepage body was truncated at the size cap; counts may be partial" : null,
+      note: homepage.truncated
+        ? "homepage body was truncated at the size cap; counts may be partial"
+        : null,
     };
   } else {
     forms = { count: null, has_password_field: null, note: "homepage unreachable" };

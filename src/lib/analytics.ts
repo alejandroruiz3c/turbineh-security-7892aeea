@@ -23,10 +23,7 @@ export function trackEvent(
 ): void {
   try {
     const lang =
-      opts.lang ??
-      (typeof document !== "undefined"
-        ? document.documentElement.lang || "es"
-        : "es");
+      opts.lang ?? (typeof document !== "undefined" ? document.documentElement.lang || "es" : "es");
     const body = {
       event_type,
       scanRequestId: opts.scanRequestId,
@@ -34,11 +31,9 @@ export function trackEvent(
       meta: opts.meta,
     };
     // Fire and forget — swallow all errors.
-    void supabase.functions
-      .invoke("track-event", { body })
-      .catch(() => {
-        /* ignore */
-      });
+    void supabase.functions.invoke("track-event", { body }).catch(() => {
+      /* ignore */
+    });
   } catch {
     /* ignore */
   }

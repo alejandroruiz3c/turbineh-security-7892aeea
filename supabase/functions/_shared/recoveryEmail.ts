@@ -66,8 +66,13 @@ export function buildRecoveryEmail(
         `For 99€: a clear report with your score, prioritized findings and a step-by-step fix plan.\n\n` +
         `Complete it here: ${resumeUrl}\n\n` +
         `If you'd rather not get more reminders, just ignore this email and we'll stop.`,
-      html: wrap("Your diagnosis is one step away", [p1, p2, p3], CTA.en, resumeUrl,
-        "If you'd rather not get more reminders, just ignore this email and we'll stop writing."),
+      html: wrap(
+        "Your diagnosis is one step away",
+        [p1, p2, p3],
+        CTA.en,
+        resumeUrl,
+        "If you'd rather not get more reminders, just ignore this email and we'll stop writing.",
+      ),
     };
   }
 
@@ -91,12 +96,23 @@ export function buildRecoveryEmail(
       `Por 99€: un informe claro con tu puntuación, hallazgos priorizados y un plan de acción.\n\n` +
       `Complétalo aquí: ${resumeUrl}\n\n` +
       `Si prefieres no recibir más recordatorios, ignora este correo y dejaremos de escribirte.`,
-    html: wrap("Tu diagnóstico está a un paso", [p1, p2, p3], CTA.es, resumeUrl,
-      "Si prefieres no recibir más recordatorios, ignora este correo y dejaremos de escribirte."),
+    html: wrap(
+      "Tu diagnóstico está a un paso",
+      [p1, p2, p3],
+      CTA.es,
+      resumeUrl,
+      "Si prefieres no recibir más recordatorios, ignora este correo y dejaremos de escribirte.",
+    ),
   };
 }
 
-function wrap(heading: string, paras: string[], cta: string, url: string, stopNote: string): string {
+function wrap(
+  heading: string,
+  paras: string[],
+  cta: string,
+  url: string,
+  stopNote: string,
+): string {
   return (
     `<div style="margin:0;padding:0;background:#0F1D2E;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">` +
     `<div style="max-width:560px;margin:0 auto">` +
@@ -105,7 +121,9 @@ function wrap(heading: string, paras: string[], cta: string, url: string, stopNo
     `<span style="font-size:11px;color:#A7B6C7;letter-spacing:2px;margin-left:8px">SECURITY</span></div>` +
     `<div style="background:#FFFFFF;margin:12px 16px 16px;border-radius:10px;padding:28px;color:#12202F">` +
     `<h1 style="margin:0 0 14px;font-size:20px;color:#0F1D2E">${heading}</h1>` +
-    paras.map((p) => `<p style="margin:0 0 14px;font-size:14px;line-height:1.6">${p}</p>`).join("") +
+    paras
+      .map((p) => `<p style="margin:0 0 14px;font-size:14px;line-height:1.6">${p}</p>`)
+      .join("") +
     `<p style="margin:20px 0"><a href="${url}" style="display:inline-block;background:#6FBE44;color:#0F1D2E;font-weight:700;text-decoration:none;padding:13px 26px;border-radius:8px;font-size:15px">${cta}</a></p>` +
     `<p style="margin:18px 0 0;font-size:12px;line-height:1.5;color:#8496A8">${stopNote}</p>` +
     `</div>` +

@@ -1,5 +1,5 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "turbineh-security",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -9,7 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test tests",
+    "check:edge": "deno check supabase/functions/*/index.ts",
+    "test:edge": "deno test supabase/tests"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 // Immediate client retry email (recovery email #1) on any non-success.
 // ---------------------------------------------------------------------------
 // Atomically claims a recovery slot (claim_recovery_email) so it counts as an
@@ -14,7 +15,7 @@ const MAX_AGE_DAYS = 7;
 
 // deno-lint-ignore no-explicit-any
 export async function sendClientRetry(
-  supabase: any,
+  supabase: SupabaseClient,
   scanRequestId: string,
 ): Promise<{ sent: boolean }> {
   const { data, error } = await supabase.rpc("claim_recovery_email", {

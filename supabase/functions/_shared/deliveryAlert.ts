@@ -28,13 +28,13 @@ export async function alertDeliveryFailure(f: DeliveryFailure): Promise<void> {
     return;
   }
 
-  const what = f.stage === "email"
-    ? "NO se ha podido enviar el email del informe"
-    : "NO se ha podido generar el PDF del informe";
+  const what =
+    f.stage === "email"
+      ? "NO se ha podido enviar el email del informe"
+      : "NO se ha podido generar el PDF del informe";
 
   const subject = `⚠️ Informe sin entregar — ${f.domain ?? "dominio desconocido"}`;
-  const site = (Deno.env.get("SITE_URL") || "https://security.turbineh.com")
-    .replace(/\/+$/, "");
+  const site = (Deno.env.get("SITE_URL") || "https://security.turbineh.com").replace(/\/+$/, "");
 
   const rows: [string, string][] = [
     ["Problema", what],
@@ -46,7 +46,8 @@ export async function alertDeliveryFailure(f: DeliveryFailure): Promise<void> {
     ["UTC", new Date().toISOString()],
   ];
 
-  const text = rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
+  const text =
+    rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
     "\n\nEl informe SÍ está generado: se puede reenviar llamando a " +
     "send-report-email con este scan_request_id.";
 

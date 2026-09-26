@@ -5,11 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Loader2, CheckCircle2, ShieldCheck, MailCheck, AlertCircle } from "lucide-react";
 import { ExitLogo } from "@/components/ExitLogo";
 
@@ -50,13 +46,7 @@ function Placeholder({ title, body }: { title: string; body: string }) {
 
 export { Placeholder };
 
-function PendingPaymentView({
-  scanId,
-  onRefresh,
-}: {
-  scanId: string;
-  onRefresh: () => void;
-}) {
+function PendingPaymentView({ scanId, onRefresh }: { scanId: string; onRefresh: () => void }) {
   const { t } = useTranslation();
   useEffect(() => {
     const interval = setInterval(() => {
@@ -73,9 +63,7 @@ function PendingPaymentView({
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div className="flex items-center gap-3">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-base text-muted-foreground">
-              {t("verify.confirmingPayment")}
-            </p>
+            <p className="text-base text-muted-foreground">{t("verify.confirmingPayment")}</p>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">{scanId.slice(0, 8)}</p>
         </div>
@@ -98,26 +86,29 @@ function VerifyPage() {
   const [scan, setScan] = useState<ScanState | null>(null);
   const [loadError, setLoadError] = useState(false);
 
-  const loadScan = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    setLoadError(false);
-    try {
-      const { data, error } = await supabase.functions.invoke("get-scan", {
-        body: { scanRequestId: id },
-      });
-      if (error || !data || (data as { error?: string }).error) {
+  const loadScan = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      setLoadError(false);
+      try {
+        const { data, error } = await supabase.functions.invoke("get-scan", {
+          body: { scanRequestId: id },
+        });
+        if (error || !data || (data as { error?: string }).error) {
+          if (!silent) setScan(null);
+          setLoadError(true);
+        } else {
+          setScan(data as ScanState);
+        }
+      } catch {
         if (!silent) setScan(null);
         setLoadError(true);
-      } else {
-        setScan(data as ScanState);
+      } finally {
+        if (!silent) setLoading(false);
       }
-    } catch {
-      if (!silent) setScan(null);
-      setLoadError(true);
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [id]);
+    },
+    [id],
+  );
 
   useEffect(() => {
     loadScan();
@@ -140,51 +131,27 @@ function VerifyPage() {
   }
 
   if (loadError || !scan) {
-    return (
-      <Placeholder
-        title={t("verify.notFoundTitle")}
-        body={t("verify.notFoundBody")}
-      />
-    );
+    return <Placeholder title={t("verify.notFoundTitle")} body={t("verify.notFoundBody")} />;
   }
 
   const isVerified = scan.status === "verified";
   const isVerifiable =
-    scan.status === "paid_pending_verification" ||
-    scan.status === "verification_failed";
+    scan.status === "paid_pending_verification" || scan.status === "verification_failed";
   const isPendingPayment = scan.status === "pending_payment";
 
   if (isVerified) {
-    return (
-      <SuccessView
-        scanId={scan.id}
-        lang={lang}
-        navigate={navigate}
-      />
-    );
+    return <SuccessView scanId={scan.id} lang={lang} navigate={navigate} />;
   }
 
   if (isPendingPayment) {
-    return (
-      <PendingPaymentView scanId={scan.id} onRefresh={() => loadScan(true)} />
-    );
+    return <PendingPaymentView scanId={scan.id} onRefresh={() => loadScan(true)} />;
   }
 
   if (!isVerifiable) {
-    return (
-      <Placeholder
-        title={t("verify.notFoundTitle")}
-        body={t("verify.notFoundBody")}
-      />
-    );
+    return <Placeholder title={t("verify.notFoundTitle")} body={t("verify.notFoundBody")} />;
   }
 
-  return (
-    <VerificationView
-      scan={scan}
-      onVerified={() => loadScan()}
-    />
-  );
+  return <VerificationView scan={scan} onVerified={() => loadScan()} />;
 }
 
 function SuccessView({
@@ -272,13 +239,7 @@ function SuccessView({
   );
 }
 
-function VerificationView({
-  scan,
-  onVerified,
-}: {
-  scan: ScanState;
-  onVerified: () => void;
-}) {
+function VerificationView({ scan, onVerified }: { scan: ScanState; onVerified: () => void }) {
   const { t } = useTranslation();
   const domain = scan.normalized_domain;
 
@@ -301,10 +262,7 @@ function VerificationView({
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  const email = useMemo(
-    () => `${localPart.trim().toLowerCase()}@${domain}`,
-    [localPart, domain],
-  );
+  const email = useMemo(() => `${localPart.trim().toLowerCase()}@${domain}`, [localPart, domain]);
 
   const canSend = cooldown === 0 && !sending;
 
@@ -323,10 +281,9 @@ function VerificationView({
     const fullEmail = `${lp}@${domain}`;
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "send-verification-code",
-        { body: { scanRequestId: scan.id, email: fullEmail } },
-      );
+      const { data, error } = await supabase.functions.invoke("send-verification-code", {
+        body: { scanRequestId: scan.id, email: fullEmail },
+      });
       if (error || !data) {
         setSendError(t("verify.errors.sendFailed"));
         return;
@@ -440,22 +397,16 @@ function VerificationView({
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
               <ShieldCheck className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              {t("verify.title")}
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("verify.title")}</h1>
           </div>
-          <p className="mt-4 text-muted-foreground">
-            {t("verify.intro", { domain })}
-          </p>
+          <p className="mt-4 text-muted-foreground">{t("verify.intro", { domain })}</p>
 
           <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">
               {t("verify.domainLabel")}
             </div>
             <div className="mt-1 font-mono text-lg font-semibold">{domain}</div>
-            <div className="mt-2 text-xs text-muted-foreground">
-              {t("verify.domainLocked")}
-            </div>
+            <div className="mt-2 text-xs text-muted-foreground">{t("verify.domainLocked")}</div>
           </div>
 
           {/* STEP 1 */}
@@ -481,9 +432,7 @@ function VerificationView({
             </div>
 
             <div className="mt-3">
-              <div className="text-xs text-muted-foreground">
-                {t("verify.quickPickLabel")}
-              </div>
+              <div className="text-xs text-muted-foreground">{t("verify.quickPickLabel")}</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {QUICK_PICKS.map((lp) => (
                   <button
@@ -500,16 +449,10 @@ function VerificationView({
               </div>
             </div>
 
-            <p className="mt-3 text-xs text-muted-foreground">
-              {t("verify.emailHelper")}
-            </p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("verify.emailHelper")}</p>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                onClick={() => handleSend()}
-                disabled={!canSend}
-                className="gap-2"
-              >
+              <Button onClick={() => handleSend()} disabled={!canSend} className="gap-2">
                 {sending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -545,9 +488,7 @@ function VerificationView({
           {maskedEmail && (
             <section className="mt-10 border-t border-border pt-8">
               <h2 className="text-lg font-semibold">{t("verify.step2Title")}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("verify.step2Helper")}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("verify.step2Helper")}</p>
 
               <div className="mt-4 flex justify-center">
                 <InputOTP

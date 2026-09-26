@@ -121,8 +121,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "AI Cybersecurity for online businesses" },
       { property: "og:description", content: "AI Cybersecurity for online businesses" },
       { name: "twitter:description", content: "AI Cybersecurity for online businesses" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QQ0MLVRBXDVnwmLWPn2CxxjKdg52/social-images/social-1783079837793-F18AD2F0-EC54-48FD-A1AD-CC76A389519D.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QQ0MLVRBXDVnwmLWPn2CxxjKdg52/social-images/social-1783079837793-F18AD2F0-EC54-48FD-A1AD-CC76A389519D.webp" },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/QQ0MLVRBXDVnwmLWPn2CxxjKdg52/social-images/social-1783079837793-F18AD2F0-EC54-48FD-A1AD-CC76A389519D.webp",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/QQ0MLVRBXDVnwmLWPn2CxxjKdg52/social-images/social-1783079837793-F18AD2F0-EC54-48FD-A1AD-CC76A389519D.webp",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
