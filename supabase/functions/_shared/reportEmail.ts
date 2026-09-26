@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 // Send the buyer their branded report email (link + PDF attachment).
 // ---------------------------------------------------------------------------
 // Shared by the send-report-email function and the post-report background chain.
@@ -8,8 +9,7 @@ import { sendEmail } from "./email.ts";
 
 const BUCKET = "reports";
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
+type Json = Record<string, unknown>;
 
 function siteBase(): string {
   return (Deno.env.get("SITE_URL") || "https://security.turbineh.com").replace(/\/+$/, "");
@@ -58,7 +58,13 @@ function buildContent(domain: string, link: string, lang: "es" | "en") {
   };
 }
 
-function wrap(heading: string, lead: string, cta: string, link: string, footerNote: string): string {
+function wrap(
+  heading: string,
+  lead: string,
+  cta: string,
+  link: string,
+  footerNote: string,
+): string {
   return (
     `<div style="margin:0;padding:0;background:#0F1D2E;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">` +
     `<div style="max-width:560px;margin:0 auto;background:#0F1D2E">` +
@@ -84,7 +90,10 @@ export interface SendReportEmailResult {
 }
 
 // deno-lint-ignore no-explicit-any
-export async function sendReportEmail(supabase: any, scanRequestId: string): Promise<SendReportEmailResult> {
+export async function sendReportEmail(
+  supabase: SupabaseClient,
+  scanRequestId: string,
+): Promise<SendReportEmailResult> {
   const { data: scan, error: scanErr } = await supabase
     .from("scan_requests")
     .select("id, status, email, lang, normalized_domain")
@@ -137,13 +146,20 @@ export async function sendReportEmail(supabase: any, scanRequestId: string): Pro
     console.error("sendReportEmail: send failed", result.error);
     return { ok: false, status: 502, body: { error: "Could not send the report email" } };
   }
-  return { ok: true, status: 200, body: { sent: true, to: maskEmail(email), attached: attachments.length > 0 } };
+  return {
+    ok: true,
+    status: 200,
+    body: { sent: true, to: maskEmail(email), attached: attachments.length > 0 },
+  };
 }
 
 function maskEmail(email: string): string {
   const at = email.lastIndexOf("@");
   if (at < 1) return "•••";
   const local = email.slice(0, at);
-  const masked = local.length <= 2 ? local[0] + "•" : local[0] + "•".repeat(Math.min(3, local.length - 2)) + local[local.length - 1];
+  const masked =
+    local.length <= 2
+      ? local[0] + "•"
+      : local[0] + "•".repeat(Math.min(3, local.length - 2)) + local[local.length - 1];
   return `${masked}@${email.slice(at + 1)}`;
 }

@@ -47,8 +47,17 @@ const SEVERITY_RANK: Record<Severity, number> = {
   info: 1,
 };
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
+interface Presence {
+  present?: boolean | null;
+  value?: string | null;
+}
+export interface ScoreInput {
+  https?: { reachable?: boolean | null; http_to_https_redirect?: string | null };
+  headers?: Record<string, Presence>;
+  email?: { dmarc?: Presence & { policy?: string | null }; spf?: Presence };
+  cookies?: { name?: string; secure?: boolean; httponly?: boolean }[];
+  exposed_paths?: { path: string; status?: number | null }[];
+}
 
 function bandFor(score: number): RiskLevel {
   if (score >= 85) return "low";
@@ -57,11 +66,11 @@ function bandFor(score: number): RiskLevel {
   return "critical";
 }
 
-function present(field: Json): boolean {
+function present(field: Presence | undefined): boolean {
   return !!(field && field.present === true);
 }
 
-export function computeScore(raw: Json): ScoreResult {
+export function computeScore(raw: ScoreInput): ScoreResult {
   const findings: ScoredFinding[] = [];
   const rubric: { id: string; penalty: number }[] = [];
   let score = 100;
@@ -79,12 +88,10 @@ export function computeScore(raw: Json): ScoreResult {
   };
 
   const https = raw?.https ?? {};
-  const tls = raw?.tls ?? {};
   const headers = raw?.headers ?? {};
   const email = raw?.email ?? {};
-  const cookies: Json[] = Array.isArray(raw?.cookies) ? raw.cookies : [];
-  const exposed: Json[] = Array.isArray(raw?.exposed_paths) ? raw.exposed_paths : [];
-  const tech = raw?.tech ?? {};
+  const cookies = Array.isArray(raw?.cookies) ? raw.cookies : [];
+  const exposed = Array.isArray(raw?.exposed_paths) ? raw.exposed_paths : [];
 
   // ---- Transport security (heavy) -----------------------------------------
   if (https.reachable === false) {
@@ -236,14 +243,46 @@ export function computeScore(raw: Json): ScoreResult {
   let exposedPenalty = 0;
   const EXPOSED_CAP = 10;
   const sensitive: Record<string, { penalty: number; severity: Severity; label: string }> = {
-    "/.env": { penalty: 5, severity: "medium", label: "An environment-file path (/.env) responds — worth confirming" },
-    "/.git/": { penalty: 5, severity: "medium", label: "A source-control path (/.git/) responds — worth confirming" },
-    "/phpinfo.php": { penalty: 3, severity: "medium", label: "A phpinfo path responds — worth confirming" },
-    "/server-status": { penalty: 2, severity: "low", label: "A server-status path responds — worth confirming" },
-    "/wp-admin/": { penalty: 1, severity: "low", label: "A WordPress admin path appears reachable — worth confirming" },
-    "/wp-login.php": { penalty: 1, severity: "low", label: "A WordPress login path appears reachable — worth confirming" },
-    "/administrator/": { penalty: 1, severity: "low", label: "An admin path appears reachable — worth confirming" },
-    "/admin/": { penalty: 1, severity: "low", label: "An admin path appears reachable — worth confirming" },
+    "/.env": {
+      penalty: 5,
+      severity: "medium",
+      label: "An environment-file path (/.env) responds — worth confirming",
+    },
+    "/.git/": {
+      penalty: 5,
+      severity: "medium",
+      label: "A source-control path (/.git/) responds — worth confirming",
+    },
+    "/phpinfo.php": {
+      penalty: 3,
+      severity: "medium",
+      label: "A phpinfo path responds — worth confirming",
+    },
+    "/server-status": {
+      penalty: 2,
+      severity: "low",
+      label: "A server-status path responds — worth confirming",
+    },
+    "/wp-admin/": {
+      penalty: 1,
+      severity: "low",
+      label: "A WordPress admin path appears reachable — worth confirming",
+    },
+    "/wp-login.php": {
+      penalty: 1,
+      severity: "low",
+      label: "A WordPress login path appears reachable — worth confirming",
+    },
+    "/administrator/": {
+      penalty: 1,
+      severity: "low",
+      label: "An admin path appears reachable — worth confirming",
+    },
+    "/admin/": {
+      penalty: 1,
+      severity: "low",
+      label: "An admin path appears reachable — worth confirming",
+    },
   };
   for (const p of exposed) {
     if (!p || p.status !== 200) continue;

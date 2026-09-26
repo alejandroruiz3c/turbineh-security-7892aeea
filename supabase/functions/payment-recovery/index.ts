@@ -29,7 +29,10 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -82,8 +85,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!row) return; // claimed by someone else / no longer eligible
     const lang: "es" | "en" = row.lang === "en" ? "en" : "es";
     const resumeUrl = `${base}/functions/v1/resume-checkout?scanRequestId=${row.id}`;
-    const mail = buildRecoveryEmail(row.recovery_emails_sent, row.normalized_domain, lang, resumeUrl);
-    const res = await sendEmail({ to: row.email, subject: mail.subject, html: mail.html, text: mail.text });
+    const mail = buildRecoveryEmail(
+      row.recovery_emails_sent,
+      row.normalized_domain,
+      lang,
+      resumeUrl,
+    );
+    const res = await sendEmail({
+      to: row.email,
+      subject: mail.subject,
+      html: mail.html,
+      text: mail.text,
+    });
     if (res.ok) sent++;
     else console.error("payment-recovery: send failed", res.error);
   }

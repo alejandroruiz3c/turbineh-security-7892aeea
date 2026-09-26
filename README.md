@@ -11,8 +11,11 @@ only a project placeholder. This repository is connected to Lovable: preserve
 the repository URL and published history until that integration is migrated.
 
 Application code, 17 Edge Function entry points and 10 database migrations are
-present. This is **not a production-readiness certification**: there is no
-automated test suite or CI workflow in the audited revision (26 September 2026).
+present. Local verification on 26 September 2026 passes frontend types/build,
+all Edge Function type checks, 23 network-safety tests and two PDF/scoring tests.
+ESLint reports no errors (six existing component-export warnings remain).
+CI reproduces these checks without production credentials. This does not certify
+live payments, ownership verification or delivery integrations.
 The historical [launch checklist](docs/GO-LIVE.md) mixes mock and Stripe phases;
 verify actual deployed settings before using it as an operations runbook.
 
@@ -37,6 +40,10 @@ release age is intentional; do not bypass it to make an install succeed.
 bun install --frozen-lockfile
 bun run dev
 bun run lint
+bun run typecheck
+bun run test
+bun run check:edge  # requires Deno 2
+bun run test:edge
 bun run build
 ```
 
@@ -51,10 +58,11 @@ recovery flows as a smoke test.
 
 ## Next engineering gates
 
-- Unit tests for domain validation, restricted fetching, scoring and quotas.
+- Integration tests for quota concurrency and paid-provider failure recovery.
 - Integration tests for ownership verification, webhook idempotency and report access.
-- A CI check for lint, types, build and tests with no production credentials.
+- Verify the hosted CI result before merging; local checks are not a hosted result.
 - A current launch runbook separating implemented code from verified deployment state.
 
 See [contribution guidance](CONTRIBUTING.md) and [security handling](SECURITY.md).
-This private repository does not grant an open-source licence.
+Public source visibility does not grant an open-source licence; no such licence
+has been selected.

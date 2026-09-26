@@ -71,7 +71,10 @@ type FunctionErrorWithContext = {
   };
 };
 
-const CARD_ICONS: Record<(typeof CARD_KEYS)[number], React.ComponentType<{ className?: string }>> = {
+const CARD_ICONS: Record<
+  (typeof CARD_KEYS)[number],
+  React.ComponentType<{ className?: string }>
+> = {
   headers: Shield,
   dmarc: Mail,
   cookies: Cookie,
@@ -99,7 +102,6 @@ export function Landing() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [limitDialog, setLimitDialog] = useState<LimitDialogState>(null);
-
 
   // Random subset of preview cards, stable per domain
   const previewCards = useMemo(() => {
@@ -231,7 +233,6 @@ export function Landing() {
     }
   };
 
-
   // Reveal-on-scroll for elements with `.reveal`
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -260,12 +261,7 @@ export function Landing() {
       <ScrollProgress />
       <Header />
       <main>
-        <Hero
-          raw={rawDomain}
-          setRaw={setRawDomain}
-          onSubmit={handleAnalyze}
-          error={inputError}
-        />
+        <Hero raw={rawDomain} setRaw={setRawDomain} onSubmit={handleAnalyze} error={inputError} />
         <HowItWorks />
         {normalized && (
           <PreviewSection
@@ -281,7 +277,6 @@ export function Landing() {
         <Paywall
           lead={lead}
           setLead={setLead}
-
           onCheckout={handleFreeStart}
           loading={checkoutLoading}
           errorMsg={checkoutError}
@@ -377,7 +372,9 @@ function LimitDialog({
               {state ? t(`limitDialog.${state.kind}.title`) : null}
             </DialogTitle>
             <DialogDescription className="pt-2 text-sm leading-relaxed text-muted-foreground">
-              {state ? t(`limitDialog.${state.kind}.body`, { email: state.email, domain: state.domain }) : null}
+              {state
+                ? t(`limitDialog.${state.kind}.body`, { email: state.email, domain: state.domain })
+                : null}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-5 rounded-2xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
@@ -410,10 +407,7 @@ function ScrollProgress() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   return (
-    <div
-      aria-hidden
-      className="fixed inset-x-0 top-0 z-50 h-0.5 bg-transparent"
-    >
+    <div aria-hidden className="fixed inset-x-0 top-0 z-50 h-0.5 bg-transparent">
       <div
         className="h-full bg-gradient-to-r from-brand via-brand-2 to-cta transition-[width] duration-150"
         style={{ width: `${p}%` }}
@@ -441,10 +435,18 @@ function Header() {
           </span>
         </a>
         <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-          <a href="#how" className="hover:text-foreground transition">{t("nav.how")}</a>
-          <a href="#what" className="hover:text-foreground transition">{t("nav.what")}</a>
-          <a href="#pricing" className="hover:text-foreground transition">{t("nav.pricing")}</a>
-          <a href="#faq" className="hover:text-foreground transition">{t("nav.faq")}</a>
+          <a href="#how" className="hover:text-foreground transition">
+            {t("nav.how")}
+          </a>
+          <a href="#what" className="hover:text-foreground transition">
+            {t("nav.what")}
+          </a>
+          <a href="#pricing" className="hover:text-foreground transition">
+            {t("nav.pricing")}
+          </a>
+          <a href="#faq" className="hover:text-foreground transition">
+            {t("nav.faq")}
+          </a>
         </nav>
         <div className="flex items-center gap-2">
           <LangToggle />
@@ -491,7 +493,6 @@ function Hero({
           </p>
         </div>
 
-
         <div id="domain-input" className="mx-auto mt-10 max-w-2xl">
           <form
             onSubmit={onSubmit}
@@ -517,9 +518,7 @@ function Hero({
               {t("domainInput.button")} <ArrowRight className="h-4 w-4" />
             </button>
           </form>
-          {error && (
-            <p className="mt-2 pl-2 text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="mt-2 pl-2 text-sm text-destructive">{error}</p>}
           <div className="mt-4 flex justify-center">
             <SampleReportButton />
           </div>
@@ -661,7 +660,13 @@ function LeadForm({
 
   const fields: { k: keyof Lead; label: string; ph: string; type: string; auto: string }[] = [
     { k: "name", label: "nameLabel", ph: "namePlaceholder", type: "text", auto: "name" },
-    { k: "company", label: "companyLabel", ph: "companyPlaceholder", type: "text", auto: "organization" },
+    {
+      k: "company",
+      label: "companyLabel",
+      ph: "companyPlaceholder",
+      type: "text",
+      auto: "organization",
+    },
     { k: "email", label: "emailLabel", ph: "emailPlaceholder", type: "email", auto: "email" },
     { k: "phone", label: "phoneLabel", ph: "phonePlaceholder", type: "tel", auto: "tel" },
   ];
@@ -746,7 +751,6 @@ function PreviewSection({
   loading: boolean;
   errorMsg: string | null;
 }) {
-
   const { t } = useTranslation();
 
   // Sort by severity to compute priority numbers
@@ -771,11 +775,15 @@ function PreviewSection({
 
   const total = ranked.length;
   const totalWeight = total * 3; // max sev weight per finding = 3
-  const currentWeight = counts.critical * 3 + counts.high * 2 + counts.medium * 1.2 + counts.low * 0.5;
+  const currentWeight =
+    counts.critical * 3 + counts.high * 2 + counts.medium * 1.2 + counts.low * 0.5;
   const exposurePct = Math.min(100, Math.round((currentWeight / Math.max(totalWeight, 1)) * 100));
 
   return (
-    <section id="preview" className="scroll-mt-24 border-t border-border/60 bg-gradient-to-b from-background to-background/60">
+    <section
+      id="preview"
+      className="scroll-mt-24 border-t border-border/60 bg-gradient-to-b from-background to-background/60"
+    >
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
         {/* Report header */}
         <div className="reveal overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur cyber-border">
@@ -786,11 +794,16 @@ function PreviewSection({
               <span className="inline-flex h-2 w-2 rounded-full bg-green-500/70" />
               <span className="ml-3">turbineh://scan/{domain}</span>
             </div>
-            <span className="hidden sm:inline">{t("preview.reportId")}: {reportId}</span>
+            <span className="hidden sm:inline">
+              {t("preview.reportId")}: {reportId}
+            </span>
           </div>
           <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-end">
             <div>
-              <div className="font-mono text-xs text-muted-foreground">{t("preview.scannedAt")} · {new Date().toISOString().slice(0, 16).replace("T", " ")} UTC</div>
+              <div className="font-mono text-xs text-muted-foreground">
+                {t("preview.scannedAt")} · {new Date().toISOString().slice(0, 16).replace("T", " ")}{" "}
+                UTC
+              </div>
               <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">
                 {t("preview.headingFor")} <span className="text-brand">{domain}</span>
               </h2>
@@ -801,7 +814,17 @@ function PreviewSection({
             <div className="min-w-[220px]">
               <div className="mb-1 flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span>{t("preview.summary")}</span>
-                <span className={exposurePct >= 66 ? "text-red-500" : exposurePct >= 33 ? "text-orange-500" : "text-yellow-500"}>{exposurePct}%</span>
+                <span
+                  className={
+                    exposurePct >= 66
+                      ? "text-red-500"
+                      : exposurePct >= 33
+                        ? "text-orange-500"
+                        : "text-yellow-500"
+                  }
+                >
+                  {exposurePct}%
+                </span>
               </div>
               <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
                 {(["critical", "high", "medium", "low"] as const).map((s) =>
@@ -869,7 +892,9 @@ function PreviewSection({
                   {/* Body */}
                   <div className="flex-1">
                     <div className="flex items-start gap-3">
-                      <div className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ${s.text}`}>
+                      <div
+                        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ${s.text}`}
+                      >
                         <Icon className="h-4 w-4" />
                       </div>
                       <div>
@@ -904,7 +929,6 @@ function PreviewSection({
             errorMsg={errorMsg}
           />
         </div>
-
       </div>
     </section>
   );
@@ -924,7 +948,6 @@ function Paywall({
   loading: boolean;
   errorMsg: string | null;
 }) {
-
   const { t } = useTranslation();
   const bullets = t("paywall.bullets", { returnObjects: true }) as string[];
   return (
@@ -968,7 +991,6 @@ function Paywall({
                 />
                 <SampleReportButton className="w-full" />
               </div>
-
             </div>
           </div>
         </div>
@@ -980,7 +1002,9 @@ function Paywall({
 /* ---------------- AI ---------------- */
 function AiSection({ domain }: { domain: string }) {
   const { t } = useTranslation();
-  const prompt = (t("ai.prompt") as string).replace("{dominio}", domain).replace("{domain}", domain);
+  const prompt = (t("ai.prompt") as string)
+    .replace("{dominio}", domain)
+    .replace("{domain}", domain);
   return (
     <section className="border-t border-border/60">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:grid-cols-2 md:px-6 md:py-24">
@@ -1017,9 +1041,7 @@ function WhatIsExposure() {
   return (
     <section className="border-t border-border/60 bg-muted/30">
       <div className="mx-auto max-w-3xl px-4 py-16 text-center md:px-6 md:py-24">
-        <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-          {t("what.exposureTitle")}
-        </h2>
+        <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t("what.exposureTitle")}</h2>
         <p className="mt-5 text-base leading-relaxed text-muted-foreground md:text-lg">
           {t("what.exposureBody")}
         </p>
@@ -1307,9 +1329,13 @@ function Footer() {
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-          <a href="/legal/terms" className="hover:text-foreground">{t("legal.terms")}</a>
-          <a href="/legal/privacy" className="hover:text-foreground">{t("legal.privacy")}</a>
-          
+          <a href="/legal/terms" className="hover:text-foreground">
+            {t("legal.terms")}
+          </a>
+          <a href="/legal/privacy" className="hover:text-foreground">
+            {t("legal.privacy")}
+          </a>
+
           <a href="mailto:hello@turbineh.com" className="hover:text-foreground">
             {t("legal.contact")}
           </a>
@@ -1318,9 +1344,4 @@ function Footer() {
       </div>
     </footer>
   );
-}
-
-// keep effect-only import for stable render on mount
-export function _noop() {
-  useEffect(() => {}, []);
 }

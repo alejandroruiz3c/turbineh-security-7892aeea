@@ -270,8 +270,7 @@ export const resources = {
       turbineh: {
         eyebrow: "Detrás de este diagnóstico",
         title: "TurbineH: el conocimiento de tu empresa, trabajando contigo",
-        lead:
-          "TurbineH convierte el conocimiento de tu empresa —el que vive en tus documentos y tus sistemas, y también el que se habla y nunca queda escrito— en inteligencia operativa que trabaja contigo cada día.",
+        lead: "TurbineH convierte el conocimiento de tu empresa —el que vive en tus documentos y tus sistemas, y también el que se habla y nunca queda escrito— en inteligencia operativa que trabaja contigo cada día.",
         blocks: [
           {
             t: "Pregunta por texto o por voz",
@@ -313,21 +312,26 @@ export const resources = {
         loading: "Cargando tu diagnóstico…",
         confirmingPayment: "Preparando tu diagnóstico… esto puede tardar unos segundos.",
         notFoundTitle: "No hemos podido cargar este diagnóstico",
-        notFoundBody: "El enlace puede haber expirado o no ser válido. Vuelve al inicio e inténtalo de nuevo.",
+        notFoundBody:
+          "El enlace puede haber expirado o no ser válido. Vuelve al inicio e inténtalo de nuevo.",
         backHome: "Volver al inicio",
         successTitle: "Dominio verificado",
-        successBody: "Dominio verificado correctamente. Ya puedes ejecutar el diagnóstico real, sin coste. Una vez emitido el informe, este diagnóstico se considerará completado.",
+        successBody:
+          "Dominio verificado correctamente. Ya puedes ejecutar el diagnóstico real, sin coste. Una vez emitido el informe, este diagnóstico se considerará completado.",
         runCta: "Ejecutar diagnóstico completo",
         runCtaStubNote: "La ejecución real se conectará en la siguiente fase.",
         title: "Verifica tu dominio",
-        intro: "Ya casi está. Para ejecutar el análisis necesitamos confirmar que tienes autorización sobre {{domain}}. Te enviaremos un código a un correo de tu propio dominio.",
+        intro:
+          "Ya casi está. Para ejecutar el análisis necesitamos confirmar que tienes autorización sobre {{domain}}. Te enviaremos un código a un correo de tu propio dominio.",
         domainLabel: "Dominio a verificar",
-        domainLocked: "El dominio no se puede cambiar tras el pago. Si te has equivocado, contáctanos.",
+        domainLocked:
+          "El dominio no se puede cambiar tras el pago. Si te has equivocado, contáctanos.",
         step1Title: "Paso 1 · Elige un correo de tu dominio",
         localPartLabel: "Parte antes de la @",
         localPartPlaceholder: "admin",
         quickPickLabel: "O elige uno común:",
-        emailHelper: "Debe ser un correo que puedas abrir en tu dominio (por ejemplo el de Google Workspace o Microsoft 365 de tu empresa).",
+        emailHelper:
+          "Debe ser un correo que puedas abrir en tu dominio (por ejemplo el de Google Workspace o Microsoft 365 de tu empresa).",
         sendCode: "Enviarme el código",
         sending: "Enviando…",
         sentTo: "Código enviado a {{email}}",
@@ -354,7 +358,8 @@ export const resources = {
       },
       processing: {
         title: "Ejecutando tu diagnóstico",
-        subtitle: "Estamos analizando {{domain}}. Suele tardar unos minutos, no cierres esta ventana.",
+        subtitle:
+          "Estamos analizando {{domain}}. Suele tardar unos minutos, no cierres esta ventana.",
         starting: "Iniciando el análisis…",
         startFailed: "No hemos podido iniciar el diagnóstico. Inténtalo de nuevo.",
         retry: "Reintentar",
@@ -376,7 +381,8 @@ export const resources = {
       report: {
         loading: "Cargando tu informe…",
         notReadyTitle: "Tu informe todavía se está preparando",
-        notReadyBody: "Aún estamos generando tu diagnóstico. Te llevamos de vuelta a la pantalla de progreso.",
+        notReadyBody:
+          "Aún estamos generando tu diagnóstico. Te llevamos de vuelta a la pantalla de progreso.",
         goToProcessing: "Ir a la pantalla de progreso",
         notFoundTitle: "No hemos podido cargar este informe",
         notFoundBody: "El enlace puede haber expirado o no ser válido.",
@@ -456,13 +462,9 @@ export const resources = {
           body: "Asegúrate de descargar antes tu reporte o se perderá. ¿Estás seguro de salir?",
         },
       },
-
-
-
     },
   },
   en: {
-
     translation: {
       meta: {
         title: "Web Exposure Diagnosis — TurbineH Security",
@@ -732,8 +734,7 @@ export const resources = {
       turbineh: {
         eyebrow: "Behind this diagnosis",
         title: "TurbineH: your company's knowledge, working with you",
-        lead:
-          "TurbineH turns your company's knowledge — the knowledge living in your documents and systems, and also the knowledge that gets spoken and never written down — into operational intelligence that works with you every day.",
+        lead: "TurbineH turns your company's knowledge — the knowledge living in your documents and systems, and also the knowledge that gets spoken and never written down — into operational intelligence that works with you every day.",
         blocks: [
           {
             t: "Ask by text or by voice",
@@ -778,18 +779,21 @@ export const resources = {
         notFoundBody: "The link may have expired or is invalid. Go back home and try again.",
         backHome: "Back to home",
         successTitle: "Domain verified",
-        successBody: "Domain successfully verified. You can now run the real diagnosis, free of charge. Once the report is issued, this diagnosis will be considered completed.",
+        successBody:
+          "Domain successfully verified. You can now run the real diagnosis, free of charge. Once the report is issued, this diagnosis will be considered completed.",
         runCta: "Run full diagnosis",
         runCtaStubNote: "Real execution will be wired in the next phase.",
         title: "Verify your domain",
-        intro: "Almost there. To run the analysis we need to confirm you're authorized over {{domain}}. We'll send a code to an email on your own domain.",
+        intro:
+          "Almost there. To run the analysis we need to confirm you're authorized over {{domain}}. We'll send a code to an email on your own domain.",
         domainLabel: "Domain to verify",
         domainLocked: "The domain cannot be changed after payment. If it's wrong, contact us.",
         step1Title: "Step 1 · Choose an email on your domain",
         localPartLabel: "Part before the @",
         localPartPlaceholder: "admin",
         quickPickLabel: "Or pick a common one:",
-        emailHelper: "It must be an email you can open on your domain (for example your company's Google Workspace or Microsoft 365).",
+        emailHelper:
+          "It must be an email you can open on your domain (for example your company's Google Workspace or Microsoft 365).",
         sendCode: "Send me the code",
         sending: "Sending…",
         sentTo: "Code sent to {{email}}",
@@ -816,7 +820,8 @@ export const resources = {
       },
       processing: {
         title: "Running your diagnosis",
-        subtitle: "We're analyzing {{domain}}. This usually takes a few minutes — keep this window open.",
+        subtitle:
+          "We're analyzing {{domain}}. This usually takes a few minutes — keep this window open.",
         starting: "Starting the analysis…",
         startFailed: "We couldn't start the diagnosis. Please try again.",
         retry: "Retry",
@@ -832,13 +837,15 @@ export const resources = {
         elapsed: "Elapsed: {{s}}s",
         reassure: "You can leave this tab open. We'll update the status automatically.",
         failedTitle: "The diagnosis failed",
-        failedBody: "Something went wrong running your analysis. Contact us and we'll sort it out at no cost.",
+        failedBody:
+          "Something went wrong running your analysis. Contact us and we'll sort it out at no cost.",
         contactSupport: "Contact support",
       },
       report: {
         loading: "Loading your report…",
         notReadyTitle: "Your report is still being prepared",
-        notReadyBody: "We're still generating your diagnosis. Taking you back to the progress screen.",
+        notReadyBody:
+          "We're still generating your diagnosis. Taking you back to the progress screen.",
         goToProcessing: "Go to progress screen",
         notFoundTitle: "We couldn't load this report",
         notFoundBody: "The link may have expired or is invalid.",
@@ -918,12 +925,8 @@ export const resources = {
           body: "Make sure you download your report first or it will be lost. Are you sure you want to leave?",
         },
       },
-
-
-
     },
   },
-
 } as const;
 
 export type Lang = "es" | "en";

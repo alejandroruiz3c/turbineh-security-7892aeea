@@ -24,8 +24,7 @@ import {
 } from "https://esm.sh/pdf-lib@1.17.1";
 import { LOGO_PNG_BASE64 } from "./logo.ts";
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
+import type { Report, ReportFinding } from "./reportTypes.ts";
 type Lang = "es" | "en";
 
 function b64ToBytes(b64: string): Uint8Array {
@@ -71,13 +70,18 @@ const M = 54;
 const CW = W - 2 * M; // content width
 
 // ---- Localized labels ----------------------------------------------------
-const T: Record<Lang, Json> = {
+const T = {
   es: {
     cover_title: "Diagnóstico de exposición web",
     prepared: "Informe preparado para",
     exec: "Resumen ejecutivo",
     score_of: "de 100",
-    risk: { low: "Riesgo bajo", moderate: "Riesgo moderado", high: "Riesgo alto", critical: "Riesgo crítico" },
+    risk: {
+      low: "Riesgo bajo",
+      moderate: "Riesgo moderado",
+      high: "Riesgo alto",
+      critical: "Riesgo crítico",
+    },
     start_title: "EMPIEZA AQUÍ: RESUÉLVELO CON CLAUDE",
     step1: "Paso 1",
     priorities: "Prioridades principales",
@@ -109,7 +113,12 @@ const T: Record<Lang, Json> = {
     prepared: "Report prepared for",
     exec: "Executive summary",
     score_of: "of 100",
-    risk: { low: "Low risk", moderate: "Moderate risk", high: "High risk", critical: "Critical risk" },
+    risk: {
+      low: "Low risk",
+      moderate: "Moderate risk",
+      high: "High risk",
+      critical: "Critical risk",
+    },
     start_title: "START HERE: FIX IT WITH CLAUDE",
     step1: "Step 1",
     priorities: "Top priorities",
@@ -142,10 +151,10 @@ function riskColor(band: string): RGB {
   if (band === "critical") return SEV.critical;
   if (band === "high") return SEV.high;
   if (band === "moderate") return SEV.medium;
-  return SEV.green;
+  return SEV.low;
 }
 function sevColor(sev: string): RGB {
-  return (SEV as Json)[sev] ?? SEV.medium;
+  return (SEV as Record<string, RGB>)[sev] ?? SEV.medium;
 }
 
 // ---------------------------------------------------------------------------
@@ -168,27 +177,31 @@ function san(v: unknown): string {
     .replace(/\u2264/g, "<=")
     .replace(/\u00D7/g, "x")
     .replace(/[\u2713\u2714]/g, "")
-    .replace(/[^\x00-\xFF]/g, "");
+    // PDF standard fonts only encode Latin-1; filter code points explicitly.
+    .split("")
+    .filter((character) => character.charCodeAt(0) <= 255)
+    .join("");
   return t;
 }
 
-// deno-lint-ignore no-explicit-any
-function deepSanitize(v: any): any {
-  if (typeof v === "string") return san(v);
-  if (Array.isArray(v)) return v.map(deepSanitize);
-  if (v && typeof v === "object") {
-    const out: Json = {};
-    for (const k of Object.keys(v)) out[k] = deepSanitize(v[k]);
-    return out;
+function deepSanitize<T>(value: T): T {
+  if (typeof value === "string") return san(value) as T;
+  if (Array.isArray(value)) return value.map(deepSanitize) as T;
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, deepSanitize(item)]),
+    ) as T;
   }
-  return v;
+  return value;
 }
 
 // ---------------------------------------------------------------------------
 // Text engine
 // ---------------------------------------------------------------------------
 function wrapLines(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = String(text ?? "").replace(/\r/g, "").split(/\n/);
+  const words = String(text ?? "")
+    .replace(/\r/g, "")
+    .split(/\n/);
   const out: string[] = [];
   for (const paragraph of words) {
     const tokens = paragraph.split(/\s+/).filter((w) => w.length > 0);
@@ -229,7 +242,7 @@ interface Ctx {
   font: PDFFont;
   bold: PDFFont;
   courier: PDFFont;
-  L: Json;
+  L: (typeof T)[Lang];
   domain: string;
 }
 interface Flow {
@@ -237,7 +250,15 @@ interface Flow {
   y: number; // cursor: top of the next line to draw
 }
 
-function centerText(page: PDFPage, s: string, cx: number, y: number, size: number, font: PDFFont, color: RGB) {
+function centerText(
+  page: PDFPage,
+  s: string,
+  cx: number,
+  y: number,
+  size: number,
+  font: PDFFont,
+  color: RGB,
+) {
   const w = font.widthOfTextAtSize(s, size);
   page.drawText(s, { x: cx - w / 2, y, size, font, color });
 }
@@ -298,7 +319,13 @@ function field(ctx: Ctx, flow: Flow, label: string, body: string, contTitle: str
   const needed = labelSize * 1.4 + lines.length * bodySize * 1.34 + 10;
   ensure(ctx, flow, Math.min(needed, 160), contTitle);
   flow.y -= labelSize * 1.4;
-  flow.page.drawText(label, { x: M, y: flow.y, size: labelSize, font: ctx.bold, color: C.greenDark });
+  flow.page.drawText(label, {
+    x: M,
+    y: flow.y,
+    size: labelSize,
+    font: ctx.bold,
+    color: C.greenDark,
+  });
   flow.y -= 2;
   para(flow, body, M, ctx.font, bodySize, C.textDark, CW, 8);
 }
@@ -314,8 +341,13 @@ function courierBox(ctx: Ctx, flow: Flow, text: string, contTitle: string): void
   const top = flow.y;
   const bottom = top - boxH;
   flow.page.drawRectangle({
-    x: M, y: bottom, width: CW, height: boxH,
-    color: C.panel, borderColor: C.panelLine, borderWidth: 1,
+    x: M,
+    y: bottom,
+    width: CW,
+    height: boxH,
+    color: C.panel,
+    borderColor: C.panelLine,
+    borderWidth: 1,
   });
   flow.page.drawRectangle({ x: M, y: bottom, width: 4, height: boxH, color: C.green });
   let ly = top - pad - size;
@@ -327,11 +359,27 @@ function courierBox(ctx: Ctx, flow: Flow, text: string, contTitle: string): void
 }
 
 // Small rounded-ish chip (label: value).
-function chip(page: PDFPage, font: PDFFont, bold: PDFFont, x: number, y: number, label: string, value: string): number {
+function chip(
+  page: PDFPage,
+  font: PDFFont,
+  bold: PDFFont,
+  x: number,
+  y: number,
+  label: string,
+  value: string,
+): number {
   const size = 9;
   const txt = `${label}: ${value}`;
   const w = bold.widthOfTextAtSize(txt, size) + 16;
-  page.drawRectangle({ x, y: y - 4, width: w, height: 18, color: C.panel, borderColor: C.panelLine, borderWidth: 1 });
+  page.drawRectangle({
+    x,
+    y: y - 4,
+    width: w,
+    height: 18,
+    color: C.panel,
+    borderColor: C.panelLine,
+    borderWidth: 1,
+  });
   page.drawText(txt, { x: x + 8, y: y + 1, size, font: bold, color: C.textDark });
   return x + w + 8;
 }
@@ -347,11 +395,17 @@ function wordmark(page: PDFPage, font: PDFFont, bold: PDFFont, x: number, y: num
   const tw = bold.widthOfTextAtSize(t, big);
   page.drawText("H", { x: x + tw, y, size: big, font: bold, color: C.green });
   const hw = bold.widthOfTextAtSize("H", big);
-  page.drawText("SECURITY", { x: x + 2, y: y - 16 * scale, size: 11 * scale, font, color: C.muted });
+  page.drawText("SECURITY", {
+    x: x + 2,
+    y: y - 16 * scale,
+    size: 11 * scale,
+    font,
+    color: C.muted,
+  });
   return x + tw + hw;
 }
 
-function coverSlide(ctx: Ctx, report: Json, lang: Lang, logo: PDFImage | null) {
+function coverSlide(ctx: Ctx, report: Report, lang: Lang, logo: PDFImage | null) {
   const page = ctx.doc.addPage([W, H]);
   page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: C.navy });
   page.drawRectangle({ x: 0, y: 0, width: W, height: 8, color: C.green });
@@ -374,7 +428,7 @@ function coverSlide(ctx: Ctx, report: Json, lang: Lang, logo: PDFImage | null) {
   page.drawText(f, { x: W - M - fw, y: 24, size: 9, font: ctx.font, color: C.muted });
 }
 
-function scoreSlide(ctx: Ctx, report: Json, lang: Lang) {
+function scoreSlide(ctx: Ctx, report: Report, lang: Lang) {
   const flow = contentPage(ctx, ctx.L.exec);
   const band = report.risk_level ?? "moderate";
   const col = riskColor(band);
@@ -387,19 +441,39 @@ function scoreSlide(ctx: Ctx, report: Json, lang: Lang) {
   centerText(flow.page, scoreStr, cx, cy - 6, 44, ctx.bold, C.textDark);
   centerText(flow.page, ctx.L.score_of, cx, cy - 34, 10, ctx.font, C.muted);
   // Risk label
-  flow.page.drawText(ctx.L.risk[band] ?? band, { x: cx + 100, y: cy + 34, size: 20, font: ctx.bold, color: col });
+  flow.page.drawText((ctx.L.risk as Record<string, string>)[band] ?? band, {
+    x: cx + 100,
+    y: cy + 34,
+    size: 20,
+    font: ctx.bold,
+    color: col,
+  });
   // Score bar 0-100
   const barX = cx + 100;
   const barY = cy + 6;
   const barW = 420;
-  flow.page.drawRectangle({ x: barX, y: barY, width: barW, height: 12, color: C.panel, borderColor: C.panelLine, borderWidth: 1 });
+  flow.page.drawRectangle({
+    x: barX,
+    y: barY,
+    width: barW,
+    height: 12,
+    color: C.panel,
+    borderColor: C.panelLine,
+    borderWidth: 1,
+  });
   const pct = Math.max(0, Math.min(100, Number(report.overall_score ?? 0))) / 100;
   flow.page.drawRectangle({ x: barX, y: barY, width: barW * pct, height: 12, color: col });
   // marker
   const mx = barX + barW * pct;
   flow.page.drawRectangle({ x: mx - 1.5, y: barY - 4, width: 3, height: 20, color: C.navy });
   flow.page.drawText("0", { x: barX, y: barY - 16, size: 8, font: ctx.font, color: C.muted });
-  flow.page.drawText("100", { x: barX + barW - 14, y: barY - 16, size: 8, font: ctx.font, color: C.muted });
+  flow.page.drawText("100", {
+    x: barX + barW - 14,
+    y: barY - 16,
+    size: 8,
+    font: ctx.font,
+    color: C.muted,
+  });
   // Verdict
   flow.y = cy - 92;
   if (report.overall_verdict) {
@@ -409,21 +483,27 @@ function scoreSlide(ctx: Ctx, report: Json, lang: Lang) {
   para(flow, report.executive_summary ?? "", M, ctx.font, 11.5, C.textDark, CW, 6);
 }
 
-function startWithClaudeSlide(ctx: Ctx, report: Json, lang: Lang) {
+function startWithClaudeSlide(ctx: Ctx, report: Report, lang: Lang) {
   const flow = contentPage(ctx, ctx.L.start_title);
   const swc = report.start_with_claude ?? {};
   // Step 1 badge
   flow.y -= 22;
   flow.page.drawRectangle({ x: M, y: flow.y - 4, width: 74, height: 22, color: C.green });
-  flow.page.drawText(ctx.L.step1, { x: M + 12, y: flow.y + 1, size: 12, font: ctx.bold, color: C.white });
+  flow.page.drawText(ctx.L.step1, {
+    x: M + 12,
+    y: flow.y + 1,
+    size: 12,
+    font: ctx.bold,
+    color: C.white,
+  });
   flow.y -= 16;
   para(flow, swc.intro ?? "", M, ctx.font, 12, C.textDark, CW, 12);
   courierBox(ctx, flow, swc.master_prompt ?? "", ctx.L.start_title);
 }
 
-function prioritiesSlide(ctx: Ctx, report: Json, lang: Lang) {
+function prioritiesSlide(ctx: Ctx, report: Report, lang: Lang) {
   const flow = contentPage(ctx, ctx.L.priorities);
-  const items: Json[] = Array.isArray(report.top_priorities) ? report.top_priorities : [];
+  const items = Array.isArray(report.top_priorities) ? report.top_priorities : [];
   flow.y -= 8;
   items.forEach((p, i) => {
     const titleLines = wrapLines(p.title ?? "", ctx.bold, 13, CW - 44);
@@ -432,14 +512,28 @@ function prioritiesSlide(ctx: Ctx, report: Json, lang: Lang) {
     ensure(ctx, flow, cardH + 8, ctx.L.priorities);
     const top = flow.y;
     const bottom = top - cardH;
-    flow.page.drawRectangle({ x: M, y: bottom, width: CW, height: cardH, color: C.panel, borderColor: C.panelLine, borderWidth: 1 });
+    flow.page.drawRectangle({
+      x: M,
+      y: bottom,
+      width: CW,
+      height: cardH,
+      color: C.panel,
+      borderColor: C.panelLine,
+      borderWidth: 1,
+    });
     // number disc
     flow.page.drawEllipse({ x: M + 22, y: top - 20, xScale: 13, yScale: 13, color: C.navy });
     centerText(flow.page, String(i + 1), M + 22, top - 24, 12, ctx.bold, C.white);
     // title + why
     let ty = top - 16;
-    for (const line of titleLines) { ty -= 13 * 1.3; flow.page.drawText(line, { x: M + 44, y: ty, size: 13, font: ctx.bold, color: C.navy }); }
-    for (const line of whyLines) { ty -= 10.5 * 1.34; flow.page.drawText(line, { x: M + 44, y: ty, size: 10.5, font: ctx.font, color: C.textDark }); }
+    for (const line of titleLines) {
+      ty -= 13 * 1.3;
+      flow.page.drawText(line, { x: M + 44, y: ty, size: 13, font: ctx.bold, color: C.navy });
+    }
+    for (const line of whyLines) {
+      ty -= 10.5 * 1.34;
+      flow.page.drawText(line, { x: M + 44, y: ty, size: 10.5, font: ctx.font, color: C.textDark });
+    }
     flow.y = bottom - 10;
   });
   if (items.length === 0) para(flow, ctx.L.no_findings, M, ctx.font, 12, C.muted, CW);
@@ -454,16 +548,29 @@ function severityBadge(page: PDFPage, bold: PDFFont, x: number, y: number, sev: 
   return w;
 }
 
-function findingSlide(ctx: Ctx, f: Json, idx: number, total: number, lang: Lang) {
+function findingSlide(ctx: Ctx, f: ReportFinding, idx: number, total: number, lang: Lang) {
   const contTitle = f.title ?? ctx.L.finding_of(idx, total);
-  const flow = contentPage(ctx, contTitle.length > 70 ? contTitle.slice(0, 67) + "…" : contTitle, ctx.L.finding_of(idx, total));
+  const flow = contentPage(
+    ctx,
+    contTitle.length > 70 ? contTitle.slice(0, 67) + "…" : contTitle,
+    ctx.L.finding_of(idx, total),
+  );
   flow.y -= 16;
   // severity badge + chips row
   const badgeW = severityBadge(flow.page, ctx.bold, M, flow.y, f.severity ?? "medium");
   let chipX = M + badgeW + 10;
-  const diff = ctx.L.difficulty[f.difficulty] ?? f.difficulty ?? "-";
+  const diff =
+    (ctx.L.difficulty as Record<string, string>)[f.difficulty ?? ""] ?? f.difficulty ?? "-";
   chipX = chip(flow.page, ctx.font, ctx.bold, chipX, flow.y, ctx.L.f_difficulty, String(diff));
-  chipX = chip(flow.page, ctx.font, ctx.bold, chipX, flow.y, ctx.L.f_time, String(f.time_estimate ?? "-"));
+  chipX = chip(
+    flow.page,
+    ctx.font,
+    ctx.bold,
+    chipX,
+    flow.y,
+    ctx.L.f_time,
+    String(f.time_estimate ?? "-"),
+  );
   chip(flow.page, ctx.font, ctx.bold, chipX, flow.y, ctx.L.f_priority, String(f.priority ?? "-"));
   flow.y -= 22;
 
@@ -475,13 +582,19 @@ function findingSlide(ctx: Ctx, f: Json, idx: number, total: number, lang: Lang)
   // AI prompt box
   ensure(ctx, flow, 30, contTitle);
   flow.y -= 15;
-  flow.page.drawText(ctx.L.f_prompt, { x: M, y: flow.y, size: 11, font: ctx.bold, color: C.greenDark });
+  flow.page.drawText(ctx.L.f_prompt, {
+    x: M,
+    y: flow.y,
+    size: 11,
+    font: ctx.bold,
+    color: C.greenDark,
+  });
   flow.y -= 4;
   courierBox(ctx, flow, f.ai_prompt ?? "", contTitle);
   field(ctx, flow, ctx.L.f_help, f.when_to_get_technical_help ?? "", contTitle);
 }
 
-function columnsSlide(ctx: Ctx, report: Json, lang: Lang) {
+function columnsSlide(ctx: Ctx, report: Report, lang: Lang) {
   const flow = contentPage(ctx, ctx.L.plan);
   const plan = report.action_plan ?? {};
   const cols = [
@@ -495,11 +608,20 @@ function columnsSlide(ctx: Ctx, report: Json, lang: Lang) {
   cols.forEach((c, i) => {
     const x = M + i * (colW + gap);
     flow.page.drawRectangle({ x, y: top - 26, width: colW, height: 26, color: C.navy });
-    flow.page.drawText(c.title, { x: x + 10, y: top - 18, size: 12, font: ctx.bold, color: C.white });
+    flow.page.drawText(c.title, {
+      x: x + 10,
+      y: top - 18,
+      size: 12,
+      font: ctx.bold,
+      color: C.white,
+    });
     let y = top - 26;
     (c.items as string[]).forEach((it) => {
       const lines = wrapLines("•  " + it, ctx.font, 10, colW - 16);
-      for (const line of lines) { y -= 10 * 1.4; flow.page.drawText(line, { x: x + 8, y, size: 10, font: ctx.font, color: C.textDark }); }
+      for (const line of lines) {
+        y -= 10 * 1.4;
+        flow.page.drawText(line, { x: x + 8, y, size: 10, font: ctx.font, color: C.textDark });
+      }
       y -= 4;
     });
   });
@@ -514,9 +636,32 @@ function listSlide(ctx: Ctx, title: string, items: string[], lang: Lang) {
     ensure(ctx, flow, needed, title);
     // checkbox
     flow.y -= 12 * 1.4;
-    flow.page.drawRectangle({ x: M, y: flow.y - 2, width: 11, height: 11, borderColor: C.greenDark, borderWidth: 1.4, color: C.surface });
-    flow.page.drawText(lines[0], { x: M + 22, y: flow.y, size: 12, font: ctx.font, color: C.textDark });
-    for (let i = 1; i < lines.length; i++) { flow.y -= 12 * 1.4; flow.page.drawText(lines[i], { x: M + 22, y: flow.y, size: 12, font: ctx.font, color: C.textDark }); }
+    flow.page.drawRectangle({
+      x: M,
+      y: flow.y - 2,
+      width: 11,
+      height: 11,
+      borderColor: C.greenDark,
+      borderWidth: 1.4,
+      color: C.surface,
+    });
+    flow.page.drawText(lines[0], {
+      x: M + 22,
+      y: flow.y,
+      size: 12,
+      font: ctx.font,
+      color: C.textDark,
+    });
+    for (let i = 1; i < lines.length; i++) {
+      flow.y -= 12 * 1.4;
+      flow.page.drawText(lines[i], {
+        x: M + 22,
+        y: flow.y,
+        size: 12,
+        font: ctx.font,
+        color: C.textDark,
+      });
+    }
     flow.y -= 6;
   }
 }
@@ -527,7 +672,7 @@ function textSlide(ctx: Ctx, title: string, body: string, lang: Lang) {
   para(flow, body, M, ctx.font, 12.5, C.textDark, CW, 6);
 }
 
-function disclaimerSlide(ctx: Ctx, report: Json, lang: Lang) {
+function disclaimerSlide(ctx: Ctx, report: Report, lang: Lang) {
   const flow = contentPage(ctx, ctx.L.disclaimer);
   flow.y -= 14;
   para(flow, report.disclaimer ?? "", M, ctx.font, 11.5, C.textDark, CW, 6);
@@ -543,9 +688,9 @@ function disclaimerSlide(ctx: Ctx, report: Json, lang: Lang) {
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
-export async function buildReportPdf(rawReport: Json, lang: Lang): Promise<Uint8Array> {
+export async function buildReportPdf(rawReport: Report, lang: Lang): Promise<Uint8Array> {
   // Sanitize all strings up front so no WinAnsi-unencodable char can crash a draw.
-  const report: Json = deepSanitize(rawReport);
+  const report: Report = deepSanitize(rawReport);
   const doc = await PDFDocument.create();
   doc.setTitle(`TurbineH Security — ${report.domain ?? ""}`);
   doc.setProducer("TurbineH Security");
@@ -566,11 +711,16 @@ export async function buildReportPdf(rawReport: Json, lang: Lang): Promise<Uint8
   startWithClaudeSlide(ctx, report, lang);
   prioritiesSlide(ctx, report, lang);
 
-  const findings: Json[] = Array.isArray(report.findings) ? report.findings : [];
+  const findings = Array.isArray(report.findings) ? report.findings : [];
   findings.forEach((f, i) => findingSlide(ctx, f, i + 1, findings.length, lang));
 
   columnsSlide(ctx, report, lang);
-  listSlide(ctx, ctx.L.checklist, Array.isArray(report.final_checklist) ? report.final_checklist : [], lang);
+  listSlide(
+    ctx,
+    ctx.L.checklist,
+    Array.isArray(report.final_checklist) ? report.final_checklist : [],
+    lang,
+  );
   textSlide(ctx, ctx.L.help, report.when_to_get_help ?? "", lang);
   disclaimerSlide(ctx, report, lang);
 

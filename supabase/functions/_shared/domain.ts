@@ -4,7 +4,7 @@
 // identically in any Edge Function without network access.
 
 /**
- * Normalize raw user input into a registrable domain.
+ * Normalize raw user input into a hostname.
  *
  * Examples:
  *   "https://www.midominio.com/x?y=1#z"  -> "midominio.com"
@@ -61,12 +61,8 @@ const IPV4_RE = /^\d{1,3}(?:\.\d{1,3}){3}$/;
  * Rejects: empty, "localhost", IPv4/IPv6 literals, values containing spaces,
  * and anything that isn't a dotted domain with a plausible TLD.
  *
- * TODO(diagnostic-engine-phase): This is INPUT validation only. It does NOT
- * protect against SSRF. Before the engine actually fetches the domain, add full
- * DNS-resolution checks that reject hosts resolving into private / reserved
- * ranges — 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8,
- * 169.254.0.0/16 (incl. the 169.254.169.254 cloud metadata endpoint),
- * ::1, fc00::/7, fe80::/10 — and follow redirects safely (re-validate each hop).
+ * This is input validation only. All outbound requests must also use safeFetch,
+ * which checks resolved addresses and redirects. See its DNS-rebinding limitation.
  */
 export function validateDomain(domain: string): DomainValidation {
   if (!domain) return { ok: false, reason: "empty" };

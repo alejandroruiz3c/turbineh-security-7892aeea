@@ -21,11 +21,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 import { makeCors } from "../_shared/cors.ts";
 import { checkRateLimit, rateLimitBody } from "../_shared/rateLimit.ts";
 import { clientIp } from "../_shared/request.ts";
-import {
-  generateSixDigitCode,
-  hashCode,
-  randomSaltHex,
-} from "../_shared/verification.ts";
+import { generateSixDigitCode, hashCode, randomSaltHex } from "../_shared/verification.ts";
 import { sendEmail } from "../_shared/email.ts";
 
 interface Body {
@@ -33,8 +29,7 @@ interface Body {
   email?: string;
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Basic email shape: local@domain, single @, no whitespace, plausible TLD.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,11 +37,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const METHOD = "email_domain";
 
 // States from which a fresh code may be sent.
-const SENDABLE = new Set([
-  "paid_pending_verification",
-  "verification_failed",
-  "verified",
-]);
+const SENDABLE = new Set(["paid_pending_verification", "verification_failed", "verified"]);
 
 const COOLDOWN_MS = 60_000; // 60s between sends
 const WINDOW_MS = 3_600_000; // 1 hour
@@ -62,10 +53,7 @@ function maskEmail(email: string): string {
   if (local.length <= 2) {
     masked = local.slice(0, 1) + "•";
   } else {
-    masked =
-      local[0] +
-      "•".repeat(Math.min(3, local.length - 2)) +
-      local[local.length - 1];
+    masked = local[0] + "•".repeat(Math.min(3, local.length - 2)) + local[local.length - 1];
   }
   return `${masked}@${domain}`;
 }
@@ -135,10 +123,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const email = (body.email ?? "").toString().trim().toLowerCase();
   if (!EMAIL_RE.test(email)) {
-    return cors.json(
-      { error: "Invalid email", reason: "invalid_email" },
-      400,
-    );
+    return cors.json({ error: "Invalid email", reason: "invalid_email" }, 400);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -167,10 +152,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return cors.json({ error: "This report has already been used" }, 409);
   }
   if (!SENDABLE.has(scan.status)) {
-    return cors.json(
-      { error: "This scan is not awaiting verification" },
-      409,
-    );
+    return cors.json({ error: "This scan is not awaiting verification" }, 409);
   }
   if (scan.status === "verified") {
     return cors.json({ alreadyVerified: true }, 200);
@@ -230,10 +212,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   let windowStart = new Date(now).toISOString();
 
   if (existing) {
-    if (
-      existing.last_sent_at &&
-      now - Date.parse(existing.last_sent_at) < COOLDOWN_MS
-    ) {
+    if (existing.last_sent_at && now - Date.parse(existing.last_sent_at) < COOLDOWN_MS) {
       return cors.json(
         {
           error: "Too soon",
@@ -279,27 +258,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const expiresAt = new Date(now + CODE_TTL_MS).toISOString();
 
   // --- Upsert the verification row (never store the code in plaintext) -----
-  const { error: upErr } = await supabase
-    .from("domain_verifications")
-    .upsert(
-      {
-        scan_request_id: scan.id,
-        domain: scan.normalized_domain,
-        method: METHOD,
-        token: salt, // per-row salt for the hash
-        expected_value: expectedValue, // salted SHA-256 of the code
-        target_email: email,
-        expires_at: expiresAt,
-        status: "pending",
-        attempts: 0, // reset verify attempts on a fresh send
-        last_error: null,
-        verified_at: null,
-        last_sent_at: nowIso,
-        send_window_started_at: windowStart,
-        send_count: sendCount,
-      },
-      { onConflict: "scan_request_id,method" },
-    );
+  const { error: upErr } = await supabase.from("domain_verifications").upsert(
+    {
+      scan_request_id: scan.id,
+      domain: scan.normalized_domain,
+      method: METHOD,
+      token: salt, // per-row salt for the hash
+      expected_value: expectedValue, // salted SHA-256 of the code
+      target_email: email,
+      expires_at: expiresAt,
+      status: "pending",
+      attempts: 0, // reset verify attempts on a fresh send
+      last_error: null,
+      verified_at: null,
+      last_sent_at: nowIso,
+      send_window_started_at: windowStart,
+      send_count: sendCount,
+    },
+    { onConflict: "scan_request_id,method" },
+  );
 
   if (upErr) {
     console.error("send-verification-code: upsert failed", upErr);

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 // AI report generation — turns raw_findings into a valuable, clear, honest,
 // bilingual, slide-ready report.
 // ---------------------------------------------------------------------------
@@ -22,11 +23,7 @@ import { computeScore, type ScoredFinding, type Severity } from "./score.ts";
 import { ensureReportPdf } from "./pdfStore.ts";
 import { sendReportEmail } from "./reportEmail.ts";
 import { alertDeliveryFailure } from "./deliveryAlert.ts";
-import {
-  releaseAiBudget,
-  releaseFreeReportClaim,
-  settleAiSpend,
-} from "./quota.ts";
+import { releaseAiBudget, releaseFreeReportClaim, settleAiSpend } from "./quota.ts";
 
 const ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-fable-5";
@@ -39,8 +36,9 @@ const PRICE_OUT = 50 / 1_000_000;
 const PRICE_CACHE_READ = 1 / 1_000_000;
 const PRICE_CACHE_WRITE = 12.5 / 1_000_000;
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
+import type { Report, ReportFinding } from "./reportTypes.ts";
+import type { runDiagnostic } from "./diagnostic.ts";
+type RawFindings = Awaited<ReturnType<typeof runDiagnostic>>;
 
 // ---------------------------------------------------------------------------
 // Structured-output schema (output_config.format). Strict mode: every object
@@ -87,10 +85,18 @@ const REPORT_SCHEMA = {
           priority: { type: "integer" },
         },
         required: [
-          "title", "severity", "what_we_detected", "why_it_matters",
-          "business_impact", "recommended_action", "how_to_fix_with_ai",
-          "ai_prompt", "when_to_get_technical_help", "difficulty",
-          "time_estimate", "priority",
+          "title",
+          "severity",
+          "what_we_detected",
+          "why_it_matters",
+          "business_impact",
+          "recommended_action",
+          "how_to_fix_with_ai",
+          "ai_prompt",
+          "when_to_get_technical_help",
+          "difficulty",
+          "time_estimate",
+          "priority",
         ],
       },
     },
@@ -109,15 +115,22 @@ const REPORT_SCHEMA = {
     disclaimer: { type: "string" },
   },
   required: [
-    "executive_summary", "overall_verdict", "top_priorities", "start_with_claude",
-    "findings", "action_plan", "final_checklist", "when_to_get_help", "disclaimer",
+    "executive_summary",
+    "overall_verdict",
+    "top_priorities",
+    "start_with_claude",
+    "findings",
+    "action_plan",
+    "final_checklist",
+    "when_to_get_help",
+    "disclaimer",
   ],
 };
 
 // ---------------------------------------------------------------------------
 // The mandated "Start with Claude" action entry point (deterministic).
 // ---------------------------------------------------------------------------
-function techLabel(raw: Json, lang: "es" | "en"): string {
+function techLabel(raw: RawFindings, lang: "es" | "en"): string {
   const detected: string[] = Array.isArray(raw?.tech?.detected) ? raw.tech.detected : [];
   const cmsName = raw?.cms?.detected && raw?.cms?.name ? raw.cms.name : null;
   const parts = [...new Set([...(cmsName ? [cmsName] : []), ...detected])];
@@ -127,7 +140,7 @@ function techLabel(raw: Json, lang: "es" | "en"): string {
     : "your website technology (not identified with certainty in the external scan)";
 }
 
-function buildStartWithClaude(domain: string, raw: Json, lang: "es" | "en") {
+function buildStartWithClaude(domain: string, raw: RawFindings, lang: "es" | "en") {
   const tech = techLabel(raw, lang);
   if (lang === "es") {
     return {
@@ -173,9 +186,9 @@ function buildSystemPrompt(lang: "es" | "en"): string {
     "You must NEVER include offensive, exploitation, or attack instructions. This is a defensive report.",
     "",
     "GROUNDING RULES (mandatory — breaking these makes the report invalid):",
-    "1. Use ONLY the observations provided to you. If a value is null/unknown, say it was \"not assessed in this external scan\" — never invent, infer, or embellish a result.",
+    '1. Use ONLY the observations provided to you. If a value is null/unknown, say it was "not assessed in this external scan" — never invent, infer, or embellish a result.',
     "2. TLS: the scan can confirm ONLY that HTTPS is reachable and the TLS handshake is accepted (plus HSTS and http→https redirect behaviour). You must NEVER state or guess a certificate's expiry, issuer, protocol version, or cipher — that data was not collected.",
-    "3. exposed_paths: an HTTP 200 on a path like /wp-admin/ or /.env does NOT confirm an exposed or vulnerable panel — many sites return 200 for every path. Describe it cautiously as \"a login/admin path appears reachable and is worth confirming\", never as a confirmed exposure or breach.",
+    '3. exposed_paths: an HTTP 200 on a path like /wp-admin/ or /.env does NOT confirm an exposed or vulnerable panel — many sites return 200 for every path. Describe it cautiously as "a login/admin path appears reachable and is worth confirming", never as a confirmed exposure or breach.',
     "",
     "SCORING: the overall score and each finding's severity are FIXED and computed independently. Keep every severity exactly as given. Do not re-score, upgrade, or downgrade anything.",
     "",
@@ -189,7 +202,7 @@ function buildSystemPrompt(lang: "es" | "en"): string {
 function buildUserPrompt(
   domain: string,
   lang: "es" | "en",
-  raw: Json,
+  raw: RawFindings,
   overallScore: number,
   riskLevel: string,
   findings: ScoredFinding[],
@@ -212,7 +225,7 @@ function buildUserPrompt(
     "FINDINGS TO EXPLAIN — produce exactly one findings[] entry per item below, in this order, keeping the given severity and priority. Translate label_en into a clear title in the target language and ground every field in `observed` (and the raw findings below). Set each finding's `priority` to the value shown:",
     JSON.stringify(findingsForModel, null, 2),
     "",
-    "FULL RAW FINDINGS (the only facts you may speak to; nulls mean \"not assessed\"):",
+    'FULL RAW FINDINGS (the only facts you may speak to; nulls mean "not assessed"):',
     JSON.stringify(raw),
     "",
     "Also write: an executive_summary (4-6 plain sentences), one honest overall_verdict headline, 3-5 top_priorities, a start_with_claude section (intro + master_prompt — this will be replaced by the canonical wording, but produce a good-faith version), an action_plan (next_24h / next_7d / next_30d), a final_checklist, a when_to_get_help note, and a short disclaimer that this was a non-invasive external scan and not a guarantee.",
@@ -224,13 +237,20 @@ function buildUserPrompt(
 // ---------------------------------------------------------------------------
 interface FableResult {
   ok: boolean;
-  report?: Json;
+  report?: Report;
   model?: string;
   cost?: number;
   error?: string;
 }
 
-function computeCost(usage: Json): number {
+function computeCost(
+  usage: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_read_input_tokens?: number;
+    cache_creation_input_tokens?: number;
+  } | null,
+): number {
   const input = usage?.input_tokens ?? 0;
   const output = usage?.output_tokens ?? 0;
   const cacheRead = usage?.cache_read_input_tokens ?? 0;
@@ -304,14 +324,14 @@ async function callFable(
     }
 
     const textBlock = Array.isArray(data.content)
-      ? data.content.find((b: Json) => b?.type === "text")
+      ? data.content.find((b: { type?: string; text?: string }) => b?.type === "text")
       : null;
     if (!textBlock?.text) {
       lastError = `no_text_block:stop=${data.stop_reason}`;
       continue;
     }
 
-    let report: Json;
+    let report: Report;
     try {
       report = JSON.parse(textBlock.text);
     } catch {
@@ -328,19 +348,31 @@ async function callFable(
 // Validation
 // ---------------------------------------------------------------------------
 const REQUIRED_SECTIONS = [
-  "executive_summary", "overall_verdict", "top_priorities", "start_with_claude",
-  "findings", "action_plan", "final_checklist", "when_to_get_help", "disclaimer",
+  "executive_summary",
+  "overall_verdict",
+  "top_priorities",
+  "start_with_claude",
+  "findings",
+  "action_plan",
+  "final_checklist",
+  "when_to_get_help",
+  "disclaimer",
 ];
 
-function validateReport(report: Json, expectedFindings: number): string | null {
+function validateReport(report: Report, expectedFindings: number): string | null {
   for (const key of REQUIRED_SECTIONS) {
-    if (report[key] === undefined || report[key] === null) return `missing_section:${key}`;
+    if (report[key as keyof Report] === undefined || report[key as keyof Report] === null)
+      return `missing_section:${key}`;
   }
   if (!Array.isArray(report.findings) || report.findings.length === 0) {
     // A clean site can have zero findings — allow empty ONLY when code found none.
     if (expectedFindings !== 0) return "findings_empty";
   }
-  if (!report.action_plan?.next_24h || !report.action_plan?.next_7d || !report.action_plan?.next_30d) {
+  if (
+    !report.action_plan?.next_24h ||
+    !report.action_plan?.next_7d ||
+    !report.action_plan?.next_30d
+  ) {
     return "action_plan_incomplete";
   }
   return null;
@@ -352,11 +384,14 @@ function validateReport(report: Json, expectedFindings: number): string | null {
 export interface GenerateResult {
   ok: boolean;
   status: number;
-  body: Json;
+  body: Record<string, unknown>;
 }
 
 // deno-lint-ignore no-explicit-any
-export async function generateReport(supabase: any, scanRequestId: string): Promise<GenerateResult> {
+export async function generateReport(
+  supabase: SupabaseClient,
+  scanRequestId: string,
+): Promise<GenerateResult> {
   const { data: scan, error: scanErr } = await supabase
     .from("scan_requests")
     .select("id, normalized_domain, lang, status, report_consumed, raw_findings, email")
@@ -374,7 +409,11 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
     return { ok: false, status: 409, body: { error: "No diagnostic findings to report on" } };
   }
   if (scan.status !== "processing") {
-    return { ok: false, status: 409, body: { error: "Scan is not in the processing state", status: scan.status } };
+    return {
+      ok: false,
+      status: 409,
+      body: { error: "Scan is not in the processing state", status: scan.status },
+    };
   }
   const { data: existing, error: existErr } = await supabase
     .from("diagnostic_reports")
@@ -406,26 +445,41 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
 
   // --- Model call (pinned + retried) ---------------------------------------
   const system = buildSystemPrompt(lang);
-  const user = buildUserPrompt(domain, lang, raw, score.overall_score, score.risk_level, score.findings);
+  const user = buildUserPrompt(
+    domain,
+    lang,
+    raw,
+    score.overall_score,
+    score.risk_level,
+    score.findings,
+  );
   const result = await callFable(apiKey, model, system, user);
 
   if (!result.ok || !result.report) {
     console.error("generateReport: model call failed", result.error);
     await failScan(supabase, scan.id, result.cost ?? 0);
-    return { ok: false, status: 502, body: { error: "Report generation failed", reason: result.error } };
+    return {
+      ok: false,
+      status: 502,
+      body: { error: "Report generation failed", reason: result.error },
+    };
   }
 
   const validationError = validateReport(result.report, score.findings.length);
   if (validationError) {
     console.error("generateReport: invalid report JSON", validationError);
     await failScan(supabase, scan.id, result.cost ?? 0);
-    return { ok: false, status: 502, body: { error: "Report validation failed", reason: validationError } };
+    return {
+      ok: false,
+      status: 502,
+      body: { error: "Report validation failed", reason: validationError },
+    };
   }
 
   const report = result.report;
 
   // --- Enforce code-owned severities + priorities on the findings ----------
-  const modelFindings: Json[] = Array.isArray(report.findings) ? report.findings : [];
+  const modelFindings: ReportFinding[] = Array.isArray(report.findings) ? report.findings : [];
   const byPriority = [...score.findings].sort((a, b) => a.priority - b.priority);
   const groundedFindings = modelFindings
     .slice()
@@ -450,7 +504,10 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
     final_checklist: report.final_checklist,
     when_to_get_help: report.when_to_get_help,
     disclaimer: report.disclaimer,
-    finding_prompts: groundedFindings.map((f: Json) => ({ title: f.title, ai_prompt: f.ai_prompt })),
+    finding_prompts: groundedFindings.map((f: ReportFinding) => ({
+      title: f.title,
+      ai_prompt: f.ai_prompt,
+    })),
   };
 
   const nowIso = new Date().toISOString();
@@ -577,7 +634,7 @@ export async function generateReport(supabase: any, scanRequestId: string): Prom
  */
 // deno-lint-ignore no-explicit-any
 async function failScan(
-  supabase: any,
+  supabase: SupabaseClient,
   scanId: string,
   spentUsd: number | null,
 ): Promise<void> {

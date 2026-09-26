@@ -12,8 +12,7 @@ interface GetScanBody {
 }
 
 // Basic UUID shape check so we don't hand garbage to Postgres.
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const cors = makeCors(req);
@@ -45,9 +44,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Select only the safe columns the frontend is allowed to see.
   const { data, error } = await supabase
     .from("scan_requests")
-    .select(
-      "id, normalized_domain, status, verification_status, lang, report_consumed",
-    )
+    .select("id, normalized_domain, status, verification_status, lang, report_consumed")
     .eq("id", scanRequestId)
     .maybeSingle();
 

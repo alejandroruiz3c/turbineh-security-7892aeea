@@ -272,7 +272,9 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
                 )}
                 {isDownloading ? t("report.pdf.loading") : t("report.pdf.button")}
               </Button>
-              <span className="text-xs text-[color:var(--brand-muted)]">{t("report.pdf.emailNote")}</span>
+              <span className="text-xs text-[color:var(--brand-muted)]">
+                {t("report.pdf.emailNote")}
+              </span>
             </div>
           </div>
 
@@ -281,8 +283,7 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
           </h1>
           <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-[color:var(--brand-muted)]">
             <span>
-              {t("report.coverFor")}{" "}
-              <span className="mono text-white">{domain}</span>
+              {t("report.coverFor")} <span className="mono text-white">{domain}</span>
             </span>
             <span className="hidden md:inline">·</span>
             <span>
@@ -294,7 +295,10 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
 
       {/* Executive summary + score */}
       <SectionOnDark>
-        <SectionHeader kicker={t("report.executiveSummary")} icon={<Sparkles className="h-4 w-4" />} />
+        <SectionHeader
+          kicker={t("report.executiveSummary")}
+          icon={<Sparkles className="h-4 w-4" />}
+        />
         <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto]">
           <div className="rounded-2xl bg-white p-8 text-[color:var(--brand-navy)] shadow-2xl">
             {report.overall_verdict && (
@@ -355,7 +359,10 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
           />
           <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {report.top_priorities.map((p, i) => (
-              <div key={i} className="rounded-2xl bg-white p-6 text-[color:var(--brand-navy)] shadow-xl">
+              <div
+                key={i}
+                className="rounded-2xl bg-white p-6 text-[color:var(--brand-navy)] shadow-xl"
+              >
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-green)] text-sm font-bold text-[color:var(--brand-navy)]">
                     {i + 1}
@@ -399,9 +406,21 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
             icon={<Clock className="h-4 w-4" />}
           />
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            <PlanColumn title={t("report.plan.h24")} items={report.action_plan.next_24h} accent="critical" />
-            <PlanColumn title={t("report.plan.d7")} items={report.action_plan.next_7d} accent="high" />
-            <PlanColumn title={t("report.plan.d30")} items={report.action_plan.next_30d} accent="ok" />
+            <PlanColumn
+              title={t("report.plan.h24")}
+              items={report.action_plan.next_24h}
+              accent="critical"
+            />
+            <PlanColumn
+              title={t("report.plan.d7")}
+              items={report.action_plan.next_7d}
+              accent="high"
+            />
+            <PlanColumn
+              title={t("report.plan.d30")}
+              items={report.action_plan.next_30d}
+              accent="ok"
+            />
           </div>
         </SectionOnDark>
       )}
@@ -439,7 +458,10 @@ function ReportView({ id, payload }: { id: string; payload: ReportPayload }) {
       {/* Disclaimer */}
       {report.disclaimer && (
         <SectionOnDark>
-          <SectionHeader kicker={t("report.disclaimer.section")} title={t("report.disclaimer.title")} />
+          <SectionHeader
+            kicker={t("report.disclaimer.section")}
+            title={t("report.disclaimer.title")}
+          />
           <div className="mt-6 rounded-2xl border border-white/10 bg-[color:var(--brand-navy-2)] p-6 text-sm text-[color:var(--brand-muted)]">
             <p className="whitespace-pre-line">{report.disclaimer}</p>
           </div>
@@ -489,7 +511,13 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SectionOnDark({ children, accent = false }: { children: React.ReactNode; accent?: boolean }) {
+function SectionOnDark({
+  children,
+  accent = false,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+}) {
   return (
     <section className={accent ? "bg-[color:var(--brand-navy-2)]" : ""}>
       <div className="mx-auto max-w-5xl px-6 py-16 md:py-20">{children}</div>
@@ -660,7 +688,10 @@ function FindingCard({ finding }: { finding: Finding }) {
           {finding.when_to_get_technical_help}
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <Chip label={t("report.findings.difficulty")} value={t(`report.findings.diff.${finding.difficulty}` as const)} />
+          <Chip
+            label={t("report.findings.difficulty")}
+            value={t(`report.findings.diff.${finding.difficulty}` as const)}
+          />
           <Chip label={t("report.findings.time")} value={finding.time_estimate} />
           <Chip label={t("report.findings.priority")} value={`#${finding.priority}`} />
         </div>
@@ -698,8 +729,7 @@ function PlanColumn({
   items: string[];
   accent: "critical" | "high" | "ok";
 }) {
-  const barColor =
-    accent === "critical" ? "#D6371F" : accent === "high" ? "#E77F00" : "#3E9A34";
+  const barColor = accent === "critical" ? "#D6371F" : accent === "high" ? "#E77F00" : "#3E9A34";
   return (
     <div className="rounded-2xl bg-white p-6 text-[color:var(--brand-navy)] shadow-xl">
       <div className="flex items-center gap-2">
@@ -723,7 +753,12 @@ function ChecklistItem({ text, idx }: { text: string; idx: number }) {
   const id = `chk-${idx}`;
   return (
     <li className="flex items-start gap-3">
-      <Checkbox id={id} checked={checked} onCheckedChange={(v) => setChecked(!!v)} className="mt-0.5" />
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(v) => setChecked(!!v)}
+        className="mt-0.5"
+      />
       <label
         htmlFor={id}
         className={

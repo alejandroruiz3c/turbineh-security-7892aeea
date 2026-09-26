@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 // Build + store the report PDF and mint a short-lived signed download URL.
 // ---------------------------------------------------------------------------
 // Shared by the generate-pdf function and by the post-report background chain.
@@ -9,11 +10,10 @@ import { buildReportPdf } from "./reportPdf.ts";
 const BUCKET = "reports";
 const SIGNED_TTL = 3600; // 1 hour
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
+import type { Report, ReportRow } from "./reportTypes.ts";
 
 /** Reassemble the full localized report object from a diagnostic_reports row. */
-export function reassembleReport(row: Json): Json {
+export function reassembleReport(row: ReportRow): Report {
   const extra = row.ai_prompts_json ?? {};
   return {
     domain: row.domain,
@@ -32,19 +32,22 @@ export function reassembleReport(row: Json): Json {
 }
 
 function safeName(domain: string): string {
-  const d = (domain ?? "report").toLowerCase().replace(/[^a-z0-9.-]/g, "-").replace(/-+/g, "-");
+  const d = (domain ?? "report")
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, "-")
+    .replace(/-+/g, "-");
   return `TurbineH-Diagnostico-${d}.pdf`;
 }
 
 export interface EnsurePdfResult {
   ok: boolean;
   status: number;
-  body: Json;
+  body: Record<string, unknown>;
 }
 
 // deno-lint-ignore no-explicit-any
 export async function ensureReportPdf(
-  supabase: any,
+  supabase: SupabaseClient,
   scanRequestId: string,
   opts: { force?: boolean } = {},
 ): Promise<EnsurePdfResult> {
@@ -64,7 +67,9 @@ export async function ensureReportPdf(
 
   const { data: row, error: repErr } = await supabase
     .from("diagnostic_reports")
-    .select("domain, lang, overall_score, risk_level, executive_summary, findings_json, action_plan_json, ai_prompts_json")
+    .select(
+      "domain, lang, overall_score, risk_level, executive_summary, findings_json, action_plan_json, ai_prompts_json",
+    )
     .eq("scan_request_id", scan.id)
     .maybeSingle();
   if (repErr) {
@@ -78,8 +83,11 @@ export async function ensureReportPdf(
 
   // Does a PDF already exist?
   let exists = false;
-  const { data: listing } = await supabase.storage.from(BUCKET).list("", { limit: 100, search: `${scanRequestId}.pdf` });
-  if (Array.isArray(listing)) exists = listing.some((f: Json) => f.name === `${scanRequestId}.pdf`);
+  const { data: listing } = await supabase.storage
+    .from(BUCKET)
+    .list("", { limit: 100, search: `${scanRequestId}.pdf` });
+  if (Array.isArray(listing))
+    exists = listing.some((f: { name: string }) => f.name === `${scanRequestId}.pdf`);
 
   let rebuilt = false;
   if (!exists || opts.force) {
@@ -99,7 +107,10 @@ export async function ensureReportPdf(
       return { ok: false, status: 500, body: { error: "Upload failed" } };
     }
     rebuilt = true;
-    await supabase.from("diagnostic_reports").update({ pdf_url: `${BUCKET}/${path}` }).eq("scan_request_id", scan.id);
+    await supabase
+      .from("diagnostic_reports")
+      .update({ pdf_url: `${BUCKET}/${path}` })
+      .eq("scan_request_id", scan.id);
   }
 
   const { data: signed, error: signErr } = await supabase.storage

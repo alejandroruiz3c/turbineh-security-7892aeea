@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 // Free-tier guardrails: one report per verified email + a daily AI budget cap.
 // ---------------------------------------------------------------------------
 // Thin wrappers over the SQL functions in the 20260825130000 migration, which
@@ -29,10 +30,7 @@ export function costEstimateUsd(): number {
 export function budgetReachedBody(lang: "es" | "en" = "es") {
   return {
     error: "daily_budget_reached",
-    title:
-      lang === "en"
-        ? "Daily limit reached"
-        : "Límite diario alcanzado",
+    title: lang === "en" ? "Daily limit reached" : "Límite diario alcanzado",
     message:
       lang === "en"
         ? "Our analysis system has reached its daily capacity. It becomes " +
@@ -46,27 +44,22 @@ export function budgetReachedBody(lang: "es" | "en" = "es") {
 }
 
 /** 409 body: this email already used its single free report. */
-export function reportLimitBody(
-  lang: "es" | "en" = "es",
-  claimedDomain?: string | null,
-) {
+export function reportLimitBody(lang: "es" | "en" = "es", claimedDomain?: string | null) {
   const dom = claimedDomain ?? null;
   return {
     error: "report_limit_reached",
     title:
-      lang === "en"
-        ? "You already used your free report"
-        : "Ya has generado tu informe gratuito",
+      lang === "en" ? "You already used your free report" : "Ya has generado tu informe gratuito",
     message:
       lang === "en"
         ? `You have already generated a free security report${
-          dom ? ` for ${dom}` : ""
-        } with this email address, so you have reached the limit of one free ` +
+            dom ? ` for ${dom}` : ""
+          } with this email address, so you have reached the limit of one free ` +
           `report per verified email. If you need to analyze another domain, ` +
           `get in touch with us.`
         : `Ya has generado un informe de seguridad gratuito${
-          dom ? ` para ${dom}` : ""
-        } con este email, así que has alcanzado el límite de un informe ` +
+            dom ? ` para ${dom}` : ""
+          } con este email, así que has alcanzado el límite de un informe ` +
           `gratuito por email verificado. Si necesitas analizar otro dominio, ` +
           `ponte en contacto con nosotros.`,
     claimedDomain: dom,
@@ -91,7 +84,7 @@ export interface BudgetStatus {
  * authoritative check is reserveAiBudget, right before we spend money.
  */
 // deno-lint-ignore no-explicit-any
-export async function aiBudgetStatus(supabase: any): Promise<BudgetStatus | null> {
+export async function aiBudgetStatus(supabase: SupabaseClient): Promise<BudgetStatus | null> {
   const { data, error } = await supabase.rpc("ai_budget_status", {
     p_cap: dailyBudgetUsd(),
   });
@@ -111,7 +104,7 @@ export async function aiBudgetStatus(supabase: any): Promise<BudgetStatus | null
  */
 // deno-lint-ignore no-explicit-any
 export async function reserveAiBudget(
-  supabase: any,
+  supabase: SupabaseClient,
   scanRequestId: string,
 ): Promise<{ allowed: boolean; spent?: number; cap?: number }> {
   const { data, error } = await supabase.rpc("reserve_ai_budget", {
@@ -129,7 +122,7 @@ export async function reserveAiBudget(
 /** Book the real cost once the report exists (replaces the estimate). */
 // deno-lint-ignore no-explicit-any
 export async function settleAiSpend(
-  supabase: any,
+  supabase: SupabaseClient,
   scanRequestId: string,
   actualUsd: number,
 ): Promise<void> {
@@ -143,7 +136,7 @@ export async function settleAiSpend(
 /** Hand the reservation back when the run produced no report. */
 // deno-lint-ignore no-explicit-any
 export async function releaseAiBudget(
-  supabase: any,
+  supabase: SupabaseClient,
   scanRequestId: string,
 ): Promise<void> {
   const { error } = await supabase.rpc("release_ai_budget", {
@@ -170,7 +163,7 @@ export interface ClaimResult {
  */
 // deno-lint-ignore no-explicit-any
 export async function hasFreeReportClaim(
-  supabase: any,
+  supabase: SupabaseClient,
   email: string,
 ): Promise<{ claimed: boolean; claimed_domain?: string | null }> {
   const { data, error } = await supabase.rpc("has_free_report_claim", {
@@ -190,7 +183,7 @@ export async function hasFreeReportClaim(
  */
 // deno-lint-ignore no-explicit-any
 export async function claimFreeReport(
-  supabase: any,
+  supabase: SupabaseClient,
   email: string,
   scanRequestId: string,
   domain: string,
@@ -210,7 +203,7 @@ export async function claimFreeReport(
 /** Free the slot when the run failed and the user got nothing. */
 // deno-lint-ignore no-explicit-any
 export async function releaseFreeReportClaim(
-  supabase: any,
+  supabase: SupabaseClient,
   scanRequestId: string,
 ): Promise<void> {
   const { error } = await supabase.rpc("release_free_report_claim", {
@@ -225,7 +218,7 @@ export async function releaseFreeReportClaim(
  */
 // deno-lint-ignore no-explicit-any
 export async function verifiedEmailFor(
-  supabase: any,
+  supabase: SupabaseClient,
   scanRequestId: string,
   fallback: string | null,
 ): Promise<string | null> {

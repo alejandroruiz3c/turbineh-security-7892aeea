@@ -42,9 +42,7 @@ import {
 } from "../_shared/quota.ts";
 
 // Provided by the Supabase Edge runtime; lets the notify call outlive the response.
-declare const EdgeRuntime:
-  | { waitUntil(promise: Promise<unknown>): void }
-  | undefined;
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
 
 interface Body {
   domain?: string;
@@ -152,13 +150,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     checkRateLimit(supabase, ip, "free_diag_ip_hour", IP_HOUR_LIMIT, 3600),
     checkRateLimit(supabase, ip, "free_diag_ip_day", IP_DAY_LIMIT, 86400),
     checkRateLimit(supabase, email, "free_diag_email_day", EMAIL_DAY_LIMIT, 86400),
-    checkRateLimit(
-      supabase,
-      normalizedDomain,
-      "free_diag_domain_day",
-      DOMAIN_DAY_LIMIT,
-      86400,
-    ),
+    checkRateLimit(supabase, normalizedDomain, "free_diag_domain_day", DOMAIN_DAY_LIMIT, 86400),
   ]);
   if (!ipHourOk || !ipDayOk || !emailOk || !domainOk) {
     return cors.json(rateLimitBody(lang), 429);

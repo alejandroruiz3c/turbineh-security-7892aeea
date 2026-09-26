@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 // Rate-limiting helper backed by the atomic check_rate_limit() SQL function.
 // ---------------------------------------------------------------------------
 // Returns true when the request is ALLOWED, false when the limit is exceeded.
@@ -6,7 +7,7 @@
 
 // deno-lint-ignore no-explicit-any
 export async function checkRateLimit(
-  supabase: any,
+  supabase: SupabaseClient,
   identifier: string,
   action: string,
   limit: number,

@@ -19,8 +19,7 @@
 // credentials or bodies to scanned hosts. Pinning the socket to the validated IP
 // for TLS is not possible with the stable runtime API, so we accept this gap.
 
-const USER_AGENT =
-  "TurbineHSecurityScanner/1.0 (+external non-invasive diagnostic)";
+const USER_AGENT = "TurbineHSecurityScanner/1.0 (+external non-invasive diagnostic)";
 
 const DEFAULT_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_BYTES = 512 * 1024; // 512 KiB
@@ -79,7 +78,7 @@ export function parseIPv6(input: string): number[] | null {
   let groups: number[];
   if (halves.length === 2) {
     const missing = 8 - (head.length + rest.length);
-    if (missing < 0) return null;
+    if (missing <= 0) return null;
     groups = [...head, ...Array(missing).fill(0), ...rest];
   } else {
     groups = head;
@@ -119,27 +118,14 @@ function ipv4Forbidden(p: number[]): boolean {
 }
 
 function ipv6Forbidden(b: number[]): boolean {
-  // Unspecified ::
-  if (b.every((x) => x === 0)) return true;
-  // Loopback ::1
-  if (b.slice(0, 15).every((x) => x === 0) && b[15] === 1) return true;
-  // IPv4-mapped ::ffff:0:0/96 -> validate embedded v4
-  if (
-    b.slice(0, 10).every((x) => x === 0) &&
-    b[10] === 0xff &&
-    b[11] === 0xff
-  ) {
-    return ipv4Forbidden([b[12], b[13], b[14], b[15]]);
-  }
-  // NAT64 64:ff9b::/96 -> validate embedded v4
-  if (b[0] === 0x00 && b[1] === 0x64 && b[2] === 0xff && b[3] === 0x9b) {
-    return ipv4Forbidden([b[12], b[13], b[14], b[15]]);
-  }
-  if ((b[0] & 0xfe) === 0xfc) return true; // fc00::/7 unique-local
-  if (b[0] === 0xfe && (b[1] & 0xc0) === 0x80) return true; // fe80::/10 link-local
-  if (b[0] === 0xff) return true; // ff00::/8 multicast
-  if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x0d && b[3] === 0xb8)
-    return true; // 2001:db8::/32 documentation
+  // Only native global-unicast destinations are supported. Refuse translation,
+  // mapped, deprecated and transition mechanisms instead of trusting embedded IPs.
+  if ((b[0] & 0xe0) !== 0x20) return true; // outside 2000::/3
+  if (b[0] === 0x20 && b[1] === 0x01 && b[2] < 2) return true; // protocol assignments
+  if (b[0] === 0x20 && b[1] === 0x02) return true; // 6to4
+  if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x0d && b[3] === 0xb8) return true;
+  if (b[0] === 0x3f && b[1] === 0xff && (b[2] & 0xf0) === 0) return true; // documentation
+
   return false;
 }
 
@@ -190,9 +176,7 @@ export async function dohQuery(
       clearTimeout(t);
       if (!res.ok) continue;
       const json = (await res.json()) as { Answer?: DohAnswer[] };
-      const answers = (json.Answer ?? [])
-        .filter((a) => a.type === wantType)
-        .map((a) => a.data);
+      const answers = (json.Answer ?? []).filter((a) => a.type === wantType).map((a) => a.data);
       return { answers };
     } catch (_e) {
       // try next endpoint
@@ -202,17 +186,12 @@ export async function dohQuery(
 }
 
 /** Resolve a host's A + AAAA addresses via DoH. */
-export async function resolveHostIps(
-  host: string,
-): Promise<{ ips: string[]; error?: string }> {
+export async function resolveHostIps(host: string): Promise<{ ips: string[]; error?: string }> {
   // Already an IP literal? Return as-is.
   if (parseIPv4(host) || parseIPv6(host.replace(/^\[|\]$/g, ""))) {
     return { ips: [host.replace(/^\[|\]$/g, "")] };
   }
-  const [a, aaaa] = await Promise.all([
-    dohQuery(host, "A"),
-    dohQuery(host, "AAAA"),
-  ]);
+  const [a, aaaa] = await Promise.all([dohQuery(host, "A"), dohQuery(host, "AAAA")]);
   const ips = [...a.answers, ...aaaa.answers].filter(Boolean);
   if (ips.length === 0) return { ips: [], error: "dns_no_records" };
   return { ips };
@@ -300,7 +279,9 @@ async function readBodyCapped(
         truncated = true;
         try {
           await reader.cancel();
-        } catch (_e) { /* ignore */ }
+        } catch (_e) {
+          /* ignore */
+        }
         break;
       }
       chunks.push(value);
@@ -396,7 +377,11 @@ export async function safeFetch(
         nextUrl = new URL(location!, currentUrl).toString();
       } catch {
         // Unparseable Location — return the redirect terminally.
-        try { await res.body?.cancel(); } catch (_e) { /* ignore */ }
+        try {
+          await res.body?.cancel();
+        } catch (_e) {
+          /* ignore */
+        }
         return {
           ok: true,
           status: res.status,
@@ -409,7 +394,11 @@ export async function safeFetch(
         };
       }
       chain.push({ from: currentUrl, status: res.status, to: nextUrl });
-      try { await res.body?.cancel(); } catch (_e) { /* ignore */ }
+      try {
+        await res.body?.cancel();
+      } catch (_e) {
+        /* ignore */
+      }
       currentUrl = nextUrl;
       continue;
     }
@@ -422,7 +411,11 @@ export async function safeFetch(
       bodyText = r.text;
       truncated = r.truncated;
     } else {
-      try { await res.body?.cancel(); } catch (_e) { /* ignore */ }
+      try {
+        await res.body?.cancel();
+      } catch (_e) {
+        /* ignore */
+      }
     }
 
     return {
